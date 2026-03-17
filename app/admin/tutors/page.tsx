@@ -184,7 +184,7 @@ export default function TutorsPage() {
                       <p className="font-semibold text-gray-900">
                         {tutor.name}
                       </p>
-                      <p className="text-xs text-gray-500">ID: #{tutor.id}</p>
+                      <p className="text-xs text-gray-700">ID: #{tutor.id}</p>
                     </div>
                   </div>
                 </td>
@@ -204,7 +204,7 @@ export default function TutorsPage() {
 
                 <td className="p-4 text-sm text-gray-800">
                   <p>{tutor.email}</p>
-                  <p className="text-xs text-gray-500">{tutor.phone}</p>
+                  <p className="text-xs text-gray-700">{tutor.phone}</p>
                 </td>
 
                 <td className="p-4">
@@ -341,3 +341,4 @@ function Card({ title, value, icon, color = "blue" }: any) {
     </div>
   );
 }
+

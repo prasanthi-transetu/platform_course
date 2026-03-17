@@ -28,7 +28,7 @@ export default function QuizPage() {
           </div>
 
           <div>
-            <p className="text-gray-500 text-sm">Total Batches</p>
+            <p className="text-gray-700 text-sm">Total Batches</p>
             <h2 className="text-3xl font-bold text-gray-900">12</h2>
           </div>
         </div>
@@ -41,7 +41,7 @@ export default function QuizPage() {
           </div>
 
           <div>
-            <p className="text-gray-500 text-sm">Total Submissions</p>
+            <p className="text-gray-700 text-sm">Total Submissions</p>
             <h2 className="text-3xl font-bold text-gray-900">1,240</h2>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function QuizPage() {
           </div>
 
           <div>
-            <p className="text-gray-500 text-sm">Completion Rate</p>
+            <p className="text-gray-700 text-sm">Completion Rate</p>
             <h2 className="text-3xl font-bold text-gray-900">94%</h2>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function QuizPage() {
           </div>
 
           <div>
-            <p className="text-gray-500 text-sm">Total Quizzes</p>
+            <p className="text-gray-700 text-sm">Total Quizzes</p>
             <h2 className="text-3xl font-bold text-gray-900">36</h2>
           </div>
         </div>

@@ -48,7 +48,7 @@ export default function BatchesPage() {
 
         <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Total Batches</p>
+            <p className="text-gray-700 text-sm">Total Batches</p>
             <h2 className="text-3xl font-bold text-gray-800">
               {batches.length}
             </h2>
@@ -60,7 +60,7 @@ export default function BatchesPage() {
 
         <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Active Batches</p>
+            <p className="text-gray-700 text-sm">Active Batches</p>
             <h2 className="text-3xl font-bold text-green-600">7</h2>
           </div>
           <div className="bg-green-100 p-3 rounded-lg">
@@ -70,7 +70,7 @@ export default function BatchesPage() {
 
         <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Inactive Batches</p>
+            <p className="text-gray-700 text-sm">Inactive Batches</p>
             <h2 className="text-3xl font-bold text-red-600">3</h2>
           </div>
           <div className="bg-red-100 p-3 rounded-lg">
@@ -80,7 +80,7 @@ export default function BatchesPage() {
 
         <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between">
           <div>
-            <p className="text-gray-500 text-sm">Total Students</p>
+            <p className="text-gray-700 text-sm">Total Students</p>
             <h2 className="text-3xl font-bold text-gray-800">205</h2>
           </div>
           <div className="bg-purple-100 p-3 rounded-lg">

@@ -151,7 +151,7 @@ STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
 
         <button
           onClick={()=>router.push("/admin/students")}
-          className="absolute right-5 top-5 text-gray-500 hover:text-black"
+          className="absolute right-5 top-5 text-gray-700 hover:text-black"
         >
           <X size={20}/>
         </button>
@@ -193,7 +193,7 @@ STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
             Click here to Upload CSV File
           </p>
 
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-700 mt-1">
             Only CSV format supported
           </p>
 
