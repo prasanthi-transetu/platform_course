@@ -79,6 +79,7 @@ export default function QuizzesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [savedRows, setSavedRows] = useState<QuizItem[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -196,8 +197,10 @@ export default function QuizzesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((quiz) => (
-                <tr key={quiz.title} className="border-b border-slate-100 last:border-0">
+              {filteredRows.map((quiz, index) => {
+                const rowId = quiz.id ?? `${quiz.title}-${index}`;
+                return (
+                <tr key={rowId} className="border-b border-slate-100 last:border-0">
                   <td className="px-5 py-4 font-semibold text-slate-800">{quiz.title}</td>
                   <td className="px-5 py-4 text-slate-600">{quiz.domain}</td>
                   <td className="px-5 py-4">
@@ -217,13 +220,36 @@ export default function QuizzesPage() {
                   <td className="px-5 py-4">
                     <StatusBadge status={quiz.status} />
                   </td>
-                  <td className="px-5 py-4 text-right">
-                    <button className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+                  <td className="relative px-5 py-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenuId((prev) => (prev === rowId ? null : rowId))}
+                      className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                    >
                       <MoreVertical size={16} />
                     </button>
+
+                    {openMenuId === rowId && (
+                      <div className="absolute right-6 top-11 z-10 w-28 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => setOpenMenuId(null)}
+                          className="block w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOpenMenuId(null)}
+                          className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
-              ))}
+              )})}
               {filteredRows.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-5 py-6 text-center text-sm text-slate-500">
