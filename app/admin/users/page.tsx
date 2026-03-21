@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function UsersPage() {
   const batches = [
@@ -71,7 +72,7 @@ export default function UsersPage() {
   ];
 
   const [department, setDepartment] = useState("All Departments");
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const rowsPerPage = 3;
@@ -143,8 +144,8 @@ export default function UsersPage() {
           </thead>
 
           <tbody>
-            {data.map((b, i) => (
-              <tr key={i} className="border-t hover:bg-gray-50">
+            {data.map((b) => (
+              <tr key={b.id} className="border-t hover:bg-gray-50">
                 <td className="p-4 font-semibold">{b.id}</td>
 
                 <td className="p-4">{b.course}</td>
@@ -176,21 +177,29 @@ export default function UsersPage() {
                   <button
                     className="text-xl"
                     onClick={() =>
-                      setOpenMenu(openMenu === i ? null : i)
+                      setOpenMenu(openMenu === b.id ? null : b.id)
                     }
                   >
                     ⋮
                   </button>
 
-                  {openMenu === i && (
+                  {openMenu === b.id && (
                     <div className="absolute right-6 mt-2 bg-white border rounded shadow w-28">
-                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100">
+                      <Link
+                        href={`/admin/batches/edit/${encodeURIComponent(b.id)}`}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                        onClick={() => setOpenMenu(null)}
+                      >
                         Edit
-                      </button>
+                      </Link>
 
-                      <button className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+                      <Link
+                        href={`/admin/batches/delete/${encodeURIComponent(b.id)}`}
+                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                        onClick={() => setOpenMenu(null)}
+                      >
                         Delete
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </td>
