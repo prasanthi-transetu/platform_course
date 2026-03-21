@@ -1,4 +1,5 @@
 import { Search, Plus, ChevronDown, MoreVertical } from "lucide-react";
+import Link from "next/link";
 
 const quizRows = [
   {
@@ -75,10 +76,13 @@ export default function QuizzesPage() {
             Manage and organize assessments with domains and tags.
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <Link
+          href="/admin/quizzes/new"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
           <Plus size={16} />
           Create New Quiz
-        </button>
+        </Link>
       </div>
 
       <div className="mb-5 grid gap-4 md:grid-cols-3">
