@@ -1,5 +1,10 @@
+"use client";
+
 import { Search, Plus, ChevronDown, MoreVertical } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+const QUIZZES_STORAGE_KEY = "admin_quizzes";
 
 const quizRows = [
   {
@@ -36,11 +41,15 @@ const quizRows = [
   },
 ];
 
-const stats = [
-  { label: "TOTAL QUIZZES", value: "124" },
-  { label: "ACTIVE QUIZZES", value: "86" },
-  { label: "PENDING REVIEWS", value: "18" },
-];
+type QuizItem = {
+  id?: string;
+  title: string;
+  domain: string;
+  tags: string[];
+  module: string;
+  duration: string;
+  status: string;
+};
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "PUBLISHED") {
@@ -67,6 +76,46 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function QuizzesPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [savedRows, setSavedRows] = useState<QuizItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUIZZES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setSavedRows(parsed);
+      }
+    } catch {
+      setSavedRows([]);
+    }
+  }, []);
+
+  const allRows = useMemo(() => [...savedRows, ...quizRows], [savedRows]);
+
+  const filteredRows = useMemo(() => {
+    return allRows.filter((quiz) => {
+      const text = `${quiz.title} ${quiz.domain} ${quiz.tags.join(" ")} ${quiz.module}`.toLowerCase();
+      const searchMatch = text.includes(searchTerm.toLowerCase());
+      const statusMatch = statusFilter === "ALL" || quiz.status === statusFilter;
+      return searchMatch && statusMatch;
+    });
+  }, [allRows, searchTerm, statusFilter]);
+
+  const stats = useMemo(
+    () => [
+      { label: "TOTAL QUIZZES", value: String(allRows.length) },
+      { label: "ACTIVE QUIZZES", value: String(allRows.filter((item) => item.status === "PUBLISHED").length) },
+      {
+        label: "PENDING REVIEWS",
+        value: String(allRows.filter((item) => item.status === "DRAFT" || item.status === "SCHEDULED").length),
+      },
+    ],
+    [allRows],
+  );
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -111,14 +160,26 @@ export default function QuizzesPage() {
             />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name, domain, tags, or ID"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
             />
           </div>
-          <button className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-            All Status
+          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+            <span>All Status</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-transparent text-sm text-slate-600 outline-none"
+            >
+              <option value="ALL">All</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="DRAFT">Draft</option>
+              <option value="SCHEDULED">Scheduled</option>
+            </select>
             <ChevronDown size={15} />
-          </button>
+          </label>
         </div>
 
         <div className="overflow-x-auto">
@@ -135,7 +196,7 @@ export default function QuizzesPage() {
               </tr>
             </thead>
             <tbody>
-              {quizRows.map((quiz) => (
+              {filteredRows.map((quiz) => (
                 <tr key={quiz.title} className="border-b border-slate-100 last:border-0">
                   <td className="px-5 py-4 font-semibold text-slate-800">{quiz.title}</td>
                   <td className="px-5 py-4 text-slate-600">{quiz.domain}</td>
@@ -163,6 +224,13 @@ export default function QuizzesPage() {
                   </td>
                 </tr>
               ))}
+              {filteredRows.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-6 text-center text-sm text-slate-500">
+                    No quizzes match your search/filter.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
