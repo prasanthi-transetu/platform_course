@@ -28,6 +28,7 @@ export default function NewQuizPage() {
   const [tagInput, setTagInput] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   const filteredDomains = useMemo(
     () =>
@@ -60,7 +61,11 @@ export default function NewQuizPage() {
     setTagInput("");
   };
 
-  const handleCreateQuiz = () => {
+  const handleCreateQuiz = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setFormError("");
+    setFormSuccess("");
+
     if (!title.trim()) {
       setFormError("Quiz title is required.");
       return;
@@ -83,7 +88,8 @@ export default function NewQuizPage() {
       const existingRaw = localStorage.getItem(QUIZZES_STORAGE_KEY);
       const existing = existingRaw ? JSON.parse(existingRaw) : [];
       localStorage.setItem(QUIZZES_STORAGE_KEY, JSON.stringify([payload, ...existing]));
-      router.push("/admin/quizzes");
+      setFormSuccess("Quiz created successfully. Redirecting...");
+      setTimeout(() => router.push("/admin/quizzes"), 300);
     } catch {
       setFormError("Could not save quiz. Please try again.");
     }
@@ -106,7 +112,7 @@ export default function NewQuizPage() {
         </p>
       </div>
 
-      <div className="space-y-5">
+      <form className="space-y-5" onSubmit={handleCreateQuiz}>
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-3">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -136,6 +142,7 @@ export default function NewQuizPage() {
                 type="number"
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(e.target.value)}
+                min={0}
                 placeholder="e.g. 60"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
               />
@@ -149,6 +156,7 @@ export default function NewQuizPage() {
                 type="number"
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(e.target.value)}
+                min={0}
                 placeholder="e.g. 100"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
               />
@@ -194,6 +202,14 @@ export default function NewQuizPage() {
                 <input
                   type="text"
                   value={domainSearch}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && filteredDomains.length > 0) {
+                      e.preventDefault();
+                      const firstDomain = filteredDomains[0];
+                      setSelectedDomains((prev) => [...prev, firstDomain]);
+                      setDomainSearch("");
+                    }
+                  }}
                   onChange={(e) => setDomainSearch(e.target.value)}
                   placeholder="Search domains..."
                   className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-3 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
@@ -249,6 +265,15 @@ export default function NewQuizPage() {
                 placeholder="Type and press Enter"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
               />
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                >
+                  Add Tag
+                </button>
+              </div>
               <p className="mt-1 text-xs text-slate-400">Helpful in searching and filtering assessments.</p>
             </div>
           </div>
@@ -340,25 +365,24 @@ export default function NewQuizPage() {
             )}
           </div>
         </section>
-      </div>
+        {formError && <p className="text-sm text-red-500">{formError}</p>}
+        {formSuccess && <p className="text-sm text-emerald-600">{formSuccess}</p>}
 
-      {formError && <p className="mt-4 text-sm text-red-500">{formError}</p>}
-
-      <div className="mt-6 flex items-center justify-end gap-3">
-        <Link
-          href="/admin/quizzes"
-          className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-        >
-          Cancel
-        </Link>
-        <button
-          type="button"
-          onClick={handleCreateQuiz}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          Create Quiz
-        </button>
-      </div>
+        <div className="mt-6 flex items-center justify-end gap-3">
+          <Link
+            href="/admin/quizzes"
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Create Quiz
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
