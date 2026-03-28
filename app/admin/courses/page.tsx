@@ -49,7 +49,7 @@ export default function CoursesPage() {
     },
   ];
 
-  const domains = [
+  const [domains, setDomains] = useState([
     {
       id: 1,
       name: "Web Development",
@@ -82,7 +82,12 @@ export default function CoursesPage() {
       updated: "Oct 15, 2023",
       status: "Active",
     },
-  ];
+  ]);
+
+  const handleCreateDomain = (newDomain: any) => {
+    const nextId = domains.length ? Math.max(...domains.map(d => d.id)) + 1 : 1;
+    setDomains([...domains, { ...newDomain, id: nextId }]);
+  };
 
   const filteredCourses = courses.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -263,7 +268,7 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      <CreateDomainModal isOpen={isDomainOpen} onClose={() => setIsDomainOpen(false)} />
+      <CreateDomainModal isOpen={isDomainOpen} onClose={() => setIsDomainOpen(false)} onSubmit={handleCreateDomain} />
     </div>
   );
 }

@@ -3,9 +3,28 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-export default function CreateDomainModal({ isOpen, onClose }: any) {
+export default function CreateDomainModal({ isOpen, onClose, onSubmit }: any) {
+  const [domainName, setDomainName] = useState("");
+  const [description, setDescription] = useState("");
+  const [finalAssignment, setFinalAssignment] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [input, setInput] = useState("");
+
+  const handleCreate = () => {
+    if (!domainName) return;
+    onSubmit({
+      name: domainName,
+      category: description || "New Category",
+      courses: 0,
+      updated: "Just now",
+      status: "Active"
+    });
+    setDomainName("");
+    setDescription("");
+    setFinalAssignment("");
+    setTags([]);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -46,6 +65,8 @@ export default function CreateDomainModal({ isOpen, onClose }: any) {
             <label className="text-sm text-gray-600">Domain Name</label>
             <input
               type="text"
+              value={domainName}
+              onChange={(e) => setDomainName(e.target.value)}
               placeholder="e.g Data Science & Engineering"
               className="w-full border rounded-lg px-3 py-2 mt-1"
             />
@@ -55,6 +76,8 @@ export default function CreateDomainModal({ isOpen, onClose }: any) {
           <div>
             <label className="text-sm text-gray-600">Description</label>
             <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Briefly describe the educational focus..."
               className="w-full border rounded-lg px-3 py-2 mt-1"
             />
@@ -65,7 +88,11 @@ export default function CreateDomainModal({ isOpen, onClose }: any) {
             <label className="text-sm text-gray-600">
               Final Assignment
             </label>
-            <select className="w-full border rounded-lg px-3 py-2 mt-1">
+            <select 
+              value={finalAssignment}
+              onChange={(e) => setFinalAssignment(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 mt-1"
+            >
               <option>Select a final assignment</option>
               <option>Project</option>
               <option>Exam</option>
@@ -116,7 +143,11 @@ export default function CreateDomainModal({ isOpen, onClose }: any) {
             Cancel
           </button>
 
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+          <button 
+            onClick={handleCreate}
+            disabled={!domainName}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+          >
             Create Domain
           </button>
         </div>
