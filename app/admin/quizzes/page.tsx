@@ -6,7 +6,17 @@ import { useEffect, useMemo, useState } from "react";
 
 const QUIZZES_STORAGE_KEY = "admin_quizzes";
 
-const quizRows = [
+type QuizItem = {
+  id?: string;
+  title: string;
+  domain: string;
+  tags: string[];
+  module: string;
+  duration: string;
+  status: string;
+};
+
+const quizRows: QuizItem[] = [
   {
     title: "Introduction to Algorithms",
     domain: "Computer Science",
@@ -40,16 +50,6 @@ const quizRows = [
     status: "SCHEDULED",
   },
 ];
-
-type QuizItem = {
-  id?: string;
-  title: string;
-  domain: string;
-  tags: string[];
-  module: string;
-  duration: string;
-  status: string;
-};
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "PUBLISHED") {

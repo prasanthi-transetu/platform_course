@@ -5,11 +5,18 @@ import NavUser from "./nav-user";
 
 export default function AppSidebar() {
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 text-gray-900 flex flex-col justify-between h-screen">
+    <aside className="w-64 bg-[#1B2533] text-white flex flex-col justify-between h-screen shadow-xl">
       <div>
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-blue-600">LMS Admin</h2>
-          <p className="text-xs text-gray-700">Course Platform</p>
+        <div className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold">L</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">LMS Admin</h2>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Management Portal</p>
+            </div>
+          </div>
         </div>
 
         <NavMain />

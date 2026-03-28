@@ -3,6 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import {
+  LayoutDashboard,
+  User,
+  Building2,
+  Users,
+  Layers,
+  BookOpen,
+  UserCheck,
+  HelpCircle,
+  FileEdit,
+  Settings,
+} from "lucide-react";
+
 export default function NavMain() {
   const pathname = usePathname();
 
@@ -10,127 +23,56 @@ export default function NavMain() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
+  const navItems = [
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "User", href: "/admin/users", icon: User },
+    { label: "Institutions", href: "/admin/institutions", icon: Building2 },
+    { label: "Students", href: "/admin/students", icon: Users },
+    { label: "Batches", href: "/admin/batches", icon: Layers },
+    { label: "Courses", href: "/admin/courses", icon: BookOpen },
+    { label: "Tutors", href: "/admin/tutors", icon: UserCheck },
+    { label: "Quizzes", href: "/admin/quizzes", icon: HelpCircle },
+    { label: "Assignments", href: "/admin/assignments", icon: FileEdit },
+  ];
+
   return (
     <nav className="p-4">
-      <ul className="space-y-2 text-sm">
-        <li>
-          <Link
-            href="/admin/dashboard"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/dashboard")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Dashboard
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/users"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/users")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            User Management
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/institutions"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/institutions")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Institutions
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/students"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/students")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Students
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/batches"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/batches")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Batches
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/courses"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/courses")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Courses
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/tutors"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/tutors")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Tutors
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/quizzes"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/quizzes")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Quizzes
-          </Link>
-        </li>
-
-        <li>
-          <Link
-            href="/admin/assignments"
-            className={`block px-3 py-2 rounded ${
-              isActive("/admin/assignments")
-                ? "text-blue-600 font-medium bg-blue-50"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            Assignments
-          </Link>
-        </li>
+      <ul className="space-y-1 text-sm">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  active
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-gray-400 hover:text-white hover:bg-[#2a374a]"
+                }`}
+              >
+                <Icon size={18} />
+                <span>{item.label}</span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
+
+      <div className="mt-8 px-3">
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4">Configuration</p>
+        <Link
+          href="/admin/settings"
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            isActive("/admin/settings")
+              ? "bg-blue-600 text-white font-medium"
+              : "text-gray-400 hover:text-white hover:bg-[#2a374a]"
+          }`}
+        >
+          <Settings size={18} />
+          <span>Settings</span>
+        </Link>
+      </div>
     </nav>
   );
 }
-
