@@ -7,10 +7,13 @@ import {
   MoreVertical, FileUp, Link as LinkIcon
 } from "lucide-react";
 
+import CreateAssignmentModal from "@/components/sidebar/CreateAssignmentModal";
+
 export default function AssignmentsPage() {
   const [search, setSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const assignments = [
+  const [assignments, setAssignments] = useState([
     {
       id: "ASG-00124",
       title: "Introduction to Web Ethics",
@@ -41,7 +44,19 @@ export default function AssignmentsPage() {
       marks: 100,
       submissionType: "FILE UPLOAD",
     },
-  ];
+  ]);
+
+  const handleCreateAssignment = (newAsg: any) => {
+    const nextNum = assignments.length ? Math.max(...assignments.map(a => parseInt(a.id.split("-")[1] || "0"))) + 1 : 124;
+    const newId = `ASG-${nextNum.toString().padStart(5, '0')}`;
+    
+    setAssignments([...assignments, {
+      ...newAsg,
+      id: newId,
+      course: "New Course",
+      courseColor: "blue"
+    }]);
+  };
 
   const filteredAssignments = assignments.filter((a) =>
     a.title.toLowerCase().includes(search.toLowerCase())
@@ -54,7 +69,10 @@ export default function AssignmentsPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Assignment Management
         </h1>
-        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition"
+        >
           <Plus size={16} /> Create Assignment
         </button>
       </div>
@@ -164,6 +182,12 @@ export default function AssignmentsPage() {
           </div>
         </div>
       </div>
+
+      <CreateAssignmentModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleCreateAssignment} 
+      />
     </div>
   );
 }
