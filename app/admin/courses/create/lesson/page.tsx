@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { 
   ChevronRight, 
   FileText, 
@@ -20,16 +20,42 @@ import {
   BookOpen
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ResourceModals from "@/components/modals/ResourceModals";
 
 export default function LessonDetailsPage() {
+  const router = useRouter();
   const [lessonTitle, setLessonTitle] = useState("Foundations of User Experience");
+  const [lessonContent, setLessonContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
 
   const openModal = (type: "pdf" | "image" | "video" | "url") => {
     setModalType(type);
     setIsModalOpen(true);
+  };
+
+  const handleAddAnotherLesson = useCallback(() => {
+    // In a real app, save the current lesson
+    setLessonTitle("");
+    setLessonContent("");
+    alert("Lesson cleared! You can now add another lesson to this module.");
+  }, []);
+
+  const handleAddAnotherModule = () => {
+    router.push("/admin/courses/create/module");
+  };
+
+  const handleAddTopic = () => {
+    router.push("/admin/courses/create/topic");
+  };
+
+  const handleAddQuiz = () => {
+    router.push("/admin/quizzes/new");
+  };
+
+  const handleAddAssignment = () => {
+    router.push("/admin/assignments");
   };
 
   return (
@@ -68,7 +94,7 @@ export default function LessonDetailsPage() {
               </div>
               <div className="bg-white border-blue-500 border-l-4 rounded-r-xl shadow-sm p-4 flex items-center gap-3">
                 <FileText className="text-blue-600" size={18} />
-                <span className="text-sm font-bold text-gray-900 truncate tracking-tight">Lesson 1: Foundations</span>
+                <span className="text-sm font-bold text-gray-900 truncate tracking-tight">{lessonTitle || "New Lesson"}</span>
               </div>
             </div>
           </div>
@@ -77,14 +103,18 @@ export default function LessonDetailsPage() {
           <div>
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Add Content</h3>
             <div className="flex flex-col gap-3">
-              <Link href="/admin/courses/create/topic">
-                <button className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all group">
-                  <Plus size={16} className="text-gray-400 group-hover:text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Add Topic</span>
-                </button>
-              </Link>
+              <button 
+                onClick={handleAddTopic}
+                className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all group"
+              >
+                <Plus size={16} className="text-gray-400 group-hover:text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Add Topic</span>
+              </button>
               
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddQuiz}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all"
+              >
                 <div className="flex items-center gap-3">
                   <Plus size={16} className="text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Add Quiz</span>
@@ -92,7 +122,10 @@ export default function LessonDetailsPage() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddAssignment}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all"
+              >
                 <div className="flex items-center gap-3">
                   <Plus size={16} className="text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Add Assignment</span>
@@ -100,12 +133,18 @@ export default function LessonDetailsPage() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all mt-4">
+              <button 
+                onClick={handleAddAnotherLesson}
+                className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all mt-4"
+              >
                 <Plus size={16} className="text-gray-400" />
                 <span className="text-sm font-medium text-gray-700">Add Another Lesson</span>
               </button>
 
-              <button className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/30 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-2 font-bold text-sm">
+              <button 
+                onClick={handleAddAnotherModule}
+                className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/30 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-2 font-bold text-sm"
+              >
                 <Plus size={16} /> Add Another Module
               </button>
             </div>
@@ -149,6 +188,8 @@ export default function LessonDetailsPage() {
                   {/* TEXTAREA */}
                   <textarea 
                     placeholder="Write your lesson content here..."
+                    value={lessonContent}
+                    onChange={(e) => setLessonContent(e.target.value)}
                     className="w-full h-80 p-6 outline-none resize-none font-normal text-gray-600 placeholder-gray-400 leading-relaxed text-sm"
                   />
                 </div>

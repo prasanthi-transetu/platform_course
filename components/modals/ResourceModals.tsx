@@ -231,14 +231,23 @@ function ImageModalContent({ onClose }: { onClose: () => void }) {
 function VideoModalContent({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleEmbed = () => {
-    if (!url) {
-      alert("Please enter a video URL first.");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      if (!title) setTitle(e.target.files[0].name);
+    }
+  };
+
+  const handleAttach = () => {
+    if (!url && !file) {
+      alert("Please enter a video URL or select a video file first.");
       return;
     }
-    console.log("Embedding Video:", { title, url });
-    alert(`Video "${title}" embedded successfully!`);
+    console.log("Attaching Video:", { title, url, file });
+    alert(`Video "${title}" attached successfully!`);
     onClose();
   };
 
@@ -249,7 +258,7 @@ function VideoModalContent({ onClose }: { onClose: () => void }) {
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shadow-sm">
             <MonitorPlay className="text-blue-600" size={20} strokeWidth={2.5} />
           </div>
-          <h2 className="text-lg font-bold tracking-tight">Embed Video</h2>
+          <h2 className="text-lg font-bold tracking-tight">Attach Video Resource</h2>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
           <X size={20} />
@@ -269,6 +278,37 @@ function VideoModalContent({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Upload Video File</label>
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="video/*"
+            className="hidden"
+          />
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all group cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <Video className={file ? "text-green-500" : "text-blue-500"} size={24} strokeWidth={1.5} />
+            </div>
+            <p className="text-xs font-bold text-gray-800 group-hover:text-blue-700 transition-colors text-center">
+              {file ? file.name : "Click to select video from computer"}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-gray-100"></span>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
+            <span className="bg-white px-4 text-gray-300">OR</span>
+          </div>
+        </div>
+
+        <div>
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Video URL</label>
           <div className="relative group">
             <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors duration-300" size={16} />
@@ -280,23 +320,16 @@ function VideoModalContent({ onClose }: { onClose: () => void }) {
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-gray-800"
             />
           </div>
-          <p className="text-[10px] text-gray-400 mt-3 flex items-center gap-2 pl-1 font-medium italic">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            Supports direct links to video content.
-          </p>
         </div>
       </div>
 
       <div className="flex items-center justify-end gap-3 mt-10">
         <button onClick={onClose} className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-all text-sm">Cancel</button>
         <button 
-          onClick={handleEmbed}
+          onClick={handleAttach}
           className="px-10 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-600/25 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm"
         >
-          Embed
+          Attach Video
         </button>
       </div>
     </div>
