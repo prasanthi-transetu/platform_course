@@ -92,9 +92,11 @@ export default function CreateCoursePage() {
           Your course curriculum is currently empty. Start by adding your first module to organize lessons and resources.
         </p>
 
-        <button className="flex items-center gap-3 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all">
-          <Plus size={20} className="stroke-[3px]" /> Add First Module
-        </button>
+        <Link href="/admin/courses/create/module">
+          <button className="flex items-center gap-3 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+            <Plus size={20} className="stroke-[3px]" /> Add First Module
+          </button>
+        </Link>
       </div>
     </div>
   );
