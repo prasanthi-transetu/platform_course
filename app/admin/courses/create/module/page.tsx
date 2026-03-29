@@ -123,7 +123,10 @@ export default function ModuleDetailsPage() {
                 <ChevronDown size={16} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/30 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-4 font-bold text-sm">
+              <button 
+                onClick={handleAddAnotherModule}
+                className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/30 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-4 font-bold text-sm"
+              >
                 <Plus size={16} /> Add Another Module
               </button>
             </div>
