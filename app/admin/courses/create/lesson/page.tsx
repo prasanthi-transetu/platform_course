@@ -6,7 +6,6 @@ import {
   FileText, 
   Plus, 
   ChevronDown, 
-  Trash2, 
   Bold, 
   Italic, 
   List, 
@@ -16,12 +15,13 @@ import {
   Code,
   FileUp,
   Video,
-  Globe,
-  BookOpen
+  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ResourceModals from "@/components/modals/ResourceModals";
+
+// Updated with latest functional fixes for buttons and modals
 
 export default function LessonDetailsPage() {
   const router = useRouter();
