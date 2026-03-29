@@ -20,9 +20,17 @@ import {
   Globe
 } from "lucide-react";
 import Link from "next/link";
+import ResourceModals from "@/components/modals/ResourceModals";
 
 export default function ModuleDetailsPage() {
   const [moduleTitle, setModuleTitle] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
+
+  const openModal = (type: "pdf" | "image" | "video" | "url") => {
+    setModalType(type);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -145,15 +153,21 @@ export default function ModuleDetailsPage() {
             </div>
             <div className="p-8">
               <div className="grid grid-cols-4 gap-4">
-                <ResourceButton icon={<FileUp size={24} />} label="Attach PDF" />
-                <ResourceButton icon={<ImageIcon size={24} />} label="Upload Image" />
-                <ResourceButton icon={<Video size={24} />} label="Embed Video" />
-                <ResourceButton icon={<Globe size={24} />} label="Add URL" />
+                <ResourceButton icon={<FileUp size={24} />} label="Attach PDF" onClick={() => openModal("pdf")} />
+                <ResourceButton icon={<ImageIcon size={24} />} label="Upload Image" onClick={() => openModal("image")} />
+                <ResourceButton icon={<Video size={24} />} label="Embed Video" onClick={() => openModal("video")} />
+                <ResourceButton icon={<Globe size={24} />} label="Add URL" onClick={() => openModal("url")} />
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ResourceModals 
+        isOpen={isModalOpen} 
+        type={modalType} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }
@@ -166,13 +180,16 @@ function ToolbarButton({ icon }: { icon: React.ReactNode }) {
   );
 }
 
-function ResourceButton({ icon, label }: { icon: React.ReactNode, label: string }) {
+function ResourceButton({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick?: () => void }) {
   return (
-    <button className="flex flex-col items-center justify-center p-8 border border-gray-100 rounded-2xl bg-gray-50/30 hover:bg-white hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5 transition-all group">
+    <button 
+      onClick={onClick}
+      className="flex flex-col items-center justify-center p-8 border border-gray-100 rounded-2xl bg-gray-50/10 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
+    >
       <div className="text-gray-400 group-hover:text-blue-500 transition-colors mb-3">
         {icon}
       </div>
-      <span className="text-xs font-bold text-gray-500 group-hover:text-gray-900">{label}</span>
+      <span className="text-[10px] font-bold text-gray-400 group-hover:text-gray-900 uppercase tracking-widest">{label}</span>
     </button>
   );
 }
