@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { 
   ChevronRight, 
   FolderPlus, 
@@ -19,11 +19,14 @@ import {
   Video,
   Globe
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ResourceModals from "@/components/modals/ResourceModals";
 
 export default function ModuleDetailsPage() {
+  const router = useRouter();
   const [moduleTitle, setModuleTitle] = useState("");
+  const [moduleDescription, setModuleDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
 
@@ -32,14 +35,33 @@ export default function ModuleDetailsPage() {
     setIsModalOpen(true);
   };
 
+  const handleAddAnotherModule = useCallback(() => {
+    // In a real app, save current progress
+    setModuleTitle("");
+    setModuleDescription("");
+    alert("New module setup initialized!");
+  }, []);
+
+  const handleAddLesson = () => {
+    router.push("/admin/courses/create/lesson");
+  };
+
+  const handleAddQuiz = () => {
+    router.push("/admin/quizzes/new");
+  };
+
+  const handleAddAssignment = () => {
+    router.push("/admin/assignments");
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* TOP HEADER / BREADCRUMB */}
-      <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Link href="/admin/courses/create" className="text-gray-500 hover:text-blue-600 transition-colors">Create New Course</Link>
-          <ChevronRight size={14} className="text-gray-400" />
-          <span className="text-gray-900 font-bold">Module 1</span>
+      <div className="flex justify-between items-center p-6 bg-white border-b border-gray-100 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+          <Link href="/admin/courses/create" className="text-gray-400 hover:text-blue-600 transition-colors">Create New Course</Link>
+          <ChevronRight size={14} className="text-gray-300" />
+          <span className="text-gray-900 font-bold">New Module</span>
         </div>
         <div className="flex gap-3">
           <Link href="/admin/courses/create">
@@ -61,7 +83,7 @@ export default function ModuleDetailsPage() {
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Module Structure</h3>
             <div className="bg-white border-blue-500 border-l-4 rounded-r-xl shadow-sm p-4 flex items-center gap-3">
               <FolderPlus className="text-blue-600" size={18} />
-              <span className="text-sm font-bold text-gray-900 truncate">Module 1: Foundations</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{moduleTitle || "New Module"}</span>
             </div>
           </div>
 
@@ -69,16 +91,20 @@ export default function ModuleDetailsPage() {
           <div>
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Add Content</h3>
             <div className="flex flex-col gap-3">
-              <Link href="/admin/courses/create/lesson">
-                <button className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all group">
-                  <div className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                    <Plus size={14} className="text-gray-400 group-hover:text-blue-600" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Add Lesson</span>
-                </button>
-              </Link>
+              <button 
+                onClick={handleAddLesson}
+                className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all group shadow-sm text-left"
+              >
+                <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+                  <Plus size={14} className="text-blue-600 group-hover:text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Add Lesson</span>
+              </button>
               
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddQuiz}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+              >
                 <div className="flex items-center gap-3">
                   <FileText className="text-gray-400" size={18} />
                   <span className="text-sm font-medium text-gray-700">Add Quiz</span>
@@ -86,7 +112,10 @@ export default function ModuleDetailsPage() {
                 <ChevronDown size={16} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddAssignment}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
+              >
                 <div className="flex items-center gap-3">
                   <FileText className="text-gray-400" size={18} />
                   <span className="text-sm font-medium text-gray-700">Add Assignment</span>
