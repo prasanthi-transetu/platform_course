@@ -7,6 +7,7 @@ import {
   FileText,
   Plus,
 } from "lucide-react";
+import Link from "next/link";
 import CreateDomainModal from "@/components/sidebar/CreateDomainModel";
 
 export default function CoursesPage() {
@@ -119,9 +120,11 @@ export default function CoursesPage() {
             <Plus size={16} /> Create New Domain
           </button>
 
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors">
-            <Plus size={16} /> Create New Course
-          </button>
+          <Link href="/admin/courses/create">
+            <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors">
+              <Plus size={16} /> Create New Course
+            </button>
+          </Link>
         </div>
       </div>
 

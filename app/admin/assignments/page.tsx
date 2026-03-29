@@ -4,7 +4,7 @@ import { useState } from "react";
 import { 
   Search, Plus, 
   FileText, CheckCircle, ClipboardList, Star,
-  MoreVertical, FileUp, Link as LinkIcon
+  MoreVertical, FileUp, Link as LinkIcon, Pencil, Trash2
 } from "lucide-react";
 
 import CreateAssignmentModal from "@/components/sidebar/CreateAssignmentModal";
@@ -12,6 +12,7 @@ import CreateAssignmentModal from "@/components/sidebar/CreateAssignmentModal";
 export default function AssignmentsPage() {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [openActionId, setOpenActionId] = useState<string | null>(null);
 
   const [assignments, setAssignments] = useState([
     {
@@ -150,10 +151,33 @@ export default function AssignmentsPage() {
                       {asg.submissionType}
                     </div>
                   </td>
-                  <td className="py-4 text-center">
-                    <button className="text-gray-400 hover:text-gray-600 transition">
+                  <td className="py-4 text-center relative">
+                    <button 
+                      onClick={() => setOpenActionId(openActionId === asg.id ? null : asg.id)}
+                      className="text-gray-400 hover:text-gray-600 transition p-1"
+                    >
                       <MoreVertical size={18} />
                     </button>
+
+                    {openActionId === asg.id && (
+                      <div className="absolute right-8 top-10 bg-white shadow-xl border border-gray-100 rounded-lg w-32 py-2 z-10 text-left flex flex-col">
+                        <button 
+                          onClick={() => setOpenActionId(null)}
+                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-gray-600 hover:bg-slate-50 transition"
+                        >
+                          <Pencil size={14} className="text-gray-400" /> Edit
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setAssignments(assignments.filter(a => a.id !== asg.id));
+                            setOpenActionId(null);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 transition"
+                        >
+                          <Trash2 size={14} className="text-red-400" /> Delete
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
