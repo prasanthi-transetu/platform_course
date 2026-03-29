@@ -1,4 +1,5 @@
 "use client";
+// Force rebuild to ensure 'Add Another Module' button fix is live on Vercel
 
 import React, { useState, useCallback } from "react";
 import { 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Search, Plus, 
   FileText, CheckCircle, ClipboardList, Star,
@@ -13,6 +14,7 @@ export default function AssignmentsPage() {
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
+  const router = useRouter();
 
   const [assignments, setAssignments] = useState([
     {
@@ -162,17 +164,20 @@ export default function AssignmentsPage() {
                     {openActionId === asg.id && (
                       <div className="absolute right-8 top-10 bg-white shadow-xl border border-gray-100 rounded-lg w-32 py-2 z-10 text-left flex flex-col">
                         <button 
-                          onClick={() => setOpenActionId(null)}
-                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-gray-600 hover:bg-slate-50 transition"
+                          onClick={() => {
+                            setOpenActionId(null);
+                            router.push(`/admin/assignments/edit/${asg.id}`);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-gray-600 hover:bg-slate-50 transition text-left"
                         >
                           <Pencil size={14} className="text-gray-400" /> Edit
                         </button>
                         <button 
                           onClick={() => {
-                            setAssignments(assignments.filter(a => a.id !== asg.id));
                             setOpenActionId(null);
+                            router.push(`/admin/assignments/delete/step1/${asg.id}`);
                           }}
-                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 transition"
+                          className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 transition text-left"
                         >
                           <Trash2 size={14} className="text-red-400" /> Delete
                         </button>
