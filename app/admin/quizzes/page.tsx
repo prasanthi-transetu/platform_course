@@ -19,6 +19,7 @@ type QuizItem = {
 
 const quizRows: QuizItem[] = [
   {
+    id: "quiz-001",
     title: "Introduction to Algorithms",
     domain: "Computer Science",
     tags: ["ALGORITHMS", "BASIC"],
@@ -27,6 +28,7 @@ const quizRows: QuizItem[] = [
     status: "PUBLISHED",
   },
   {
+    id: "quiz-002",
     title: "Big O Notation Deep Dive",
     domain: "Computer Science",
     tags: ["COMPLEXITY", "ADVANCED"],
@@ -35,6 +37,7 @@ const quizRows: QuizItem[] = [
     status: "DRAFT",
   },
   {
+    id: "quiz-003",
     title: "Sorting Algorithms Midterm",
     domain: "Data Engineering",
     tags: ["SORTING", "MIDTERM"],
@@ -43,6 +46,7 @@ const quizRows: QuizItem[] = [
     status: "PUBLISHED",
   },
   {
+    id: "quiz-004",
     title: "Final Comprehensive Assessment",
     domain: "Computer Science",
     tags: ["FINAL", "GENERAL"],
