@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { 
   ChevronRight, 
   FileText, 
@@ -21,16 +21,42 @@ import {
   LayoutGrid
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ResourceModals from "@/components/modals/ResourceModals";
 
 export default function TopicDetailsPage() {
+  const router = useRouter();
   const [topicTitle, setTopicTitle] = useState("");
+  const [topicContent, setTopicContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
 
   const openModal = (type: "pdf" | "image" | "video" | "url") => {
     setModalType(type);
     setIsModalOpen(true);
+  };
+
+  const handleAddAnotherTopic = useCallback(() => {
+    // In a real app, we might save the current topic first
+    setTopicTitle("");
+    setTopicContent("");
+    alert("Topic cleared! You can now add another topic to this lesson.");
+  }, []);
+
+  const handleAddAnotherLesson = () => {
+    router.push("/admin/courses/create/lesson");
+  };
+
+  const handleAddAnotherModule = () => {
+    router.push("/admin/courses/create/module");
+  };
+
+  const handleAddQuiz = () => {
+    router.push("/admin/quizzes/new");
+  };
+
+  const handleAddAssignment = () => {
+    router.push("/admin/assignments"); // We don't have a /new yet, so sending to list
   };
 
   return (
@@ -76,7 +102,7 @@ export default function TopicDetailsPage() {
                 </div>
                 <div className="bg-white border-blue-500 border-l-4 rounded-r-xl shadow-sm p-3 flex items-center gap-3">
                   <Target className="text-blue-600" size={16} />
-                  <span className="text-sm font-bold text-gray-900 truncate tracking-tight">Topic: [New Topic]</span>
+                  <span className="text-sm font-bold text-gray-900 truncate tracking-tight">Topic: {topicTitle || "[New Topic]"}</span>
                 </div>
               </div>
             </div>
@@ -86,7 +112,10 @@ export default function TopicDetailsPage() {
           <div>
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Add Content to Lesson</h3>
             <div className="flex flex-col gap-3">
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddQuiz}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all"
+              >
                 <div className="flex items-center gap-3">
                   <Plus size={16} className="text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Add Quiz</span>
@@ -94,7 +123,10 @@ export default function TopicDetailsPage() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all">
+              <button 
+                onClick={handleAddAssignment}
+                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all"
+              >
                 <div className="flex items-center gap-3">
                   <Plus size={16} className="text-gray-400" />
                   <span className="text-sm font-medium text-gray-700">Add Assignment</span>
@@ -102,7 +134,10 @@ export default function TopicDetailsPage() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
 
-              <button className="w-full flex items-center justify-center gap-2 border border-blue-100 bg-blue-50/20 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-4 font-bold text-sm">
+              <button 
+                onClick={handleAddAnotherTopic}
+                className="w-full flex items-center justify-center gap-2 border border-blue-100 bg-blue-50/20 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all mt-4 font-bold text-sm"
+              >
                 <Plus size={16} /> Add Another Topic
               </button>
             </div>
@@ -111,10 +146,16 @@ export default function TopicDetailsPage() {
           {/* LESSON CONTROLS */}
           <div>
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Lesson Controls</h3>
-            <button className="w-full flex items-center justify-center gap-2 border border-blue-100 bg-white text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all font-bold text-sm mb-3">
+            <button 
+              onClick={handleAddAnotherLesson}
+              className="w-full flex items-center justify-center gap-2 border border-blue-100 bg-white text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all font-bold text-sm mb-3"
+            >
               <Plus size={16} /> Add Another Lesson
             </button>
-            <button className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/10 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all font-bold text-sm">
+            <button 
+              onClick={handleAddAnotherModule}
+              className="w-full flex items-center justify-center gap-2 border border-dashed border-blue-200 bg-blue-50/10 text-blue-600 py-3 rounded-xl hover:bg-blue-50 transition-all font-bold text-sm"
+            >
               <Plus size={16} /> Add Another Module
             </button>
           </div>
@@ -158,6 +199,8 @@ export default function TopicDetailsPage() {
                   {/* TEXTAREA */}
                   <textarea 
                     placeholder="Write your topic content here..."
+                    value={topicContent}
+                    onChange={(e) => setTopicContent(e.target.value)}
                     className="w-full h-80 p-8 outline-none resize-none font-normal text-gray-600 placeholder-gray-400 leading-relaxed text-sm"
                   />
                 </div>
