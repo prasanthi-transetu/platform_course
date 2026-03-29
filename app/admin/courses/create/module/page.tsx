@@ -1,14 +1,14 @@
 "use client";
-// Force rebuild to ensure 'Add Another Module' button fix is live on Vercel
+// Force rebuild – Quiz/Assignment inline selector dropdowns added
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { 
   ChevronRight, 
   FolderPlus, 
   FileText, 
   Plus, 
   ChevronDown, 
-  Trash2, 
+  ChevronUp,
   Bold, 
   Italic, 
   List, 
@@ -18,11 +18,34 @@ import {
   Code,
   FileUp,
   Video,
-  Globe
+  Globe,
+  Check,
+  ClipboardList
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ResourceModals from "@/components/modals/ResourceModals";
+
+// ─── Static sample data (mirrors quizzes/assignments pages) ───────────────────
+const SAMPLE_QUIZZES = [
+  { id: "quiz-001", title: "Introduction to Algorithms", module: "Module 1: Foundations", duration: "15 Qs", status: "PUBLISHED" },
+  { id: "quiz-002", title: "Big O Notation Deep Dive", module: "Module 2: Complexity", duration: "10 Qs", status: "DRAFT" },
+  { id: "quiz-003", title: "Sorting Algorithms Midterm", module: "Module 3: Sorting", duration: "40 Qs", status: "PUBLISHED" },
+  { id: "quiz-004", title: "Final Comprehensive Assessment", module: "Module 5: Final Project", duration: "50 Qs", status: "SCHEDULED" },
+];
+
+const SAMPLE_ASSIGNMENTS = [
+  { id: "ASG-00124", title: "Introduction to Web Ethics", domain: "Web Development", marks: 100, submissionType: "FILE UPLOAD" },
+  { id: "ASG-00125", title: "Advanced React Hooks Quiz", domain: "Web Development", marks: 50, submissionType: "LINK" },
+  { id: "ASG-00126", title: "Data Modeling Fundamentals", domain: "Data Science", marks: 100, submissionType: "FILE UPLOAD" },
+];
+
+// ─── Status badge colours ─────────────────────────────────────────────────────
+function statusColor(status: string) {
+  if (status === "PUBLISHED") return "bg-emerald-100 text-emerald-700";
+  if (status === "DRAFT") return "bg-amber-100 text-amber-700";
+  return "bg-indigo-100 text-indigo-700";
+}
 
 export default function ModuleDetailsPage() {
   const router = useRouter();
@@ -31,29 +54,52 @@ export default function ModuleDetailsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
 
+  // Dropdown open states
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+
+  // Selected items
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+
+  // Search filters inside dropdowns
+  const [quizSearch, setQuizSearch] = useState("");
+  const [assignmentSearch, setAssignmentSearch] = useState("");
+
+  const quizRef = useRef<HTMLDivElement>(null);
+  const assignmentRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (quizRef.current && !quizRef.current.contains(e.target as Node)) setQuizOpen(false);
+      if (assignmentRef.current && !assignmentRef.current.contains(e.target as Node)) setAssignmentOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const openModal = (type: "pdf" | "image" | "video" | "url") => {
     setModalType(type);
     setIsModalOpen(true);
   };
 
   const handleAddAnotherModule = useCallback(() => {
-    // In a real app, save current progress
     setModuleTitle("");
     setModuleDescription("");
     alert("New module setup initialized!");
   }, []);
 
-  const handleAddLesson = () => {
-    router.push("/admin/courses/create/lesson");
-  };
+  const filteredQuizzes = SAMPLE_QUIZZES.filter(q =>
+    q.title.toLowerCase().includes(quizSearch.toLowerCase())
+  );
 
-  const handleAddQuiz = () => {
-    router.push("/admin/quizzes/new");
-  };
+  const filteredAssignments = SAMPLE_ASSIGNMENTS.filter(a =>
+    a.title.toLowerCase().includes(assignmentSearch.toLowerCase())
+  );
 
-  const handleAddAssignment = () => {
-    router.push("/admin/assignments");
-  };
+  const selectedQuiz = SAMPLE_QUIZZES.find(q => q.id === selectedQuizId);
+  const selectedAssignment = SAMPLE_ASSIGNMENTS.find(a => a.id === selectedAssignmentId);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -92,8 +138,9 @@ export default function ModuleDetailsPage() {
           <div>
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Add Content</h3>
             <div className="flex flex-col gap-3">
+              {/* Add Lesson */}
               <button 
-                onClick={handleAddLesson}
+                onClick={() => router.push("/admin/courses/create/lesson")}
                 className="w-full flex items-center gap-3 border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all group shadow-sm text-left"
               >
                 <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
@@ -102,27 +149,161 @@ export default function ModuleDetailsPage() {
                 <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Add Lesson</span>
               </button>
               
-              <button 
-                onClick={handleAddQuiz}
-                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="text-gray-400" size={18} />
-                  <span className="text-sm font-medium text-gray-700">Add Quiz</span>
-                </div>
-                <ChevronDown size={16} className="text-gray-400" />
-              </button>
+              {/* ── Add Quiz dropdown ── */}
+              <div ref={quizRef} className="relative">
+                <button 
+                  onClick={() => { setQuizOpen(p => !p); setAssignmentOpen(false); }}
+                  className={`w-full flex items-center justify-between border px-4 py-3 rounded-xl transition-all shadow-sm ${quizOpen ? "border-blue-400 bg-blue-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className={quizOpen ? "text-blue-500" : "text-gray-400"} size={18} />
+                    <span className={`text-sm font-medium ${quizOpen ? "text-blue-600" : "text-gray-700"}`}>
+                      {selectedQuiz ? selectedQuiz.title : "Add Quiz"}
+                    </span>
+                  </div>
+                  {quizOpen ? <ChevronUp size={16} className="text-blue-500" /> : <ChevronDown size={16} className="text-gray-400" />}
+                </button>
 
-              <button 
-                onClick={handleAddAssignment}
-                className="w-full flex items-center justify-between border border-gray-200 bg-white px-4 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="text-gray-400" size={18} />
-                  <span className="text-sm font-medium text-gray-700">Add Assignment</span>
-                </div>
-                <ChevronDown size={16} className="text-gray-400" />
-              </button>
+                {quizOpen && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-30 relative">
+                    {/* Search */}
+                    <div className="p-3 border-b border-gray-100">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={quizSearch}
+                        onChange={e => setQuizSearch(e.target.value)}
+                        placeholder="Search quizzes..."
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-400 bg-gray-50"
+                      />
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-52 overflow-y-auto">
+                      {filteredQuizzes.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-4">No quizzes found</p>
+                      ) : (
+                        filteredQuizzes.map(quiz => (
+                          <button
+                            key={quiz.id}
+                            onClick={() => {
+                              setSelectedQuizId(prev => prev === quiz.id ? null : quiz.id);
+                              setQuizOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0 ${selectedQuizId === quiz.id ? "bg-blue-50" : ""}`}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">{quiz.title}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">{quiz.module} · {quiz.duration}</p>
+                            </div>
+                            <div className="flex items-center gap-2 ml-2 shrink-0">
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${statusColor(quiz.status)}`}>{quiz.status}</span>
+                              {selectedQuizId === quiz.id && <Check size={14} className="text-blue-600" />}
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Footer action */}
+                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                      <button
+                        onClick={() => { setQuizOpen(false); router.push("/admin/quizzes/new"); }}
+                        className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Plus size={13} /> Create New Quiz
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected quiz chip */}
+                {selectedQuiz && !quizOpen && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Check size={13} className="text-blue-600 shrink-0" />
+                    <span className="text-xs font-semibold text-blue-700 truncate">{selectedQuiz.title}</span>
+                    <button onClick={() => setSelectedQuizId(null)} className="ml-auto text-blue-400 hover:text-red-500 text-[10px] font-bold">✕</button>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Add Assignment dropdown ── */}
+              <div ref={assignmentRef} className="relative">
+                <button 
+                  onClick={() => { setAssignmentOpen(p => !p); setQuizOpen(false); }}
+                  className={`w-full flex items-center justify-between border px-4 py-3 rounded-xl transition-all shadow-sm ${assignmentOpen ? "border-purple-400 bg-purple-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ClipboardList className={assignmentOpen ? "text-purple-500" : "text-gray-400"} size={18} />
+                    <span className={`text-sm font-medium ${assignmentOpen ? "text-purple-600" : "text-gray-700"}`}>
+                      {selectedAssignment ? selectedAssignment.title : "Add Assignment"}
+                    </span>
+                  </div>
+                  {assignmentOpen ? <ChevronUp size={16} className="text-purple-500" /> : <ChevronDown size={16} className="text-gray-400" />}
+                </button>
+
+                {assignmentOpen && (
+                  <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-30 relative">
+                    {/* Search */}
+                    <div className="p-3 border-b border-gray-100">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={assignmentSearch}
+                        onChange={e => setAssignmentSearch(e.target.value)}
+                        placeholder="Search assignments..."
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 bg-gray-50"
+                      />
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-52 overflow-y-auto">
+                      {filteredAssignments.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-4">No assignments found</p>
+                      ) : (
+                        filteredAssignments.map(asg => (
+                          <button
+                            key={asg.id}
+                            onClick={() => {
+                              setSelectedAssignmentId(prev => prev === asg.id ? null : asg.id);
+                              setAssignmentOpen(false);
+                            }}
+                            className={`w-full text-left flex items-center justify-between px-4 py-3 hover:bg-purple-50 transition-colors border-b border-gray-50 last:border-0 ${selectedAssignmentId === asg.id ? "bg-purple-50" : ""}`}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">{asg.title}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">{asg.domain} · {asg.marks} marks</p>
+                            </div>
+                            <div className="flex items-center gap-2 ml-2 shrink-0">
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{asg.submissionType}</span>
+                              {selectedAssignmentId === asg.id && <Check size={14} className="text-purple-600" />}
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Footer action */}
+                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                      <button
+                        onClick={() => { setAssignmentOpen(false); router.push("/admin/assignments"); }}
+                        className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      >
+                        <Plus size={13} /> Create New Assignment
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected assignment chip */}
+                {selectedAssignment && !assignmentOpen && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg">
+                    <Check size={13} className="text-purple-600 shrink-0" />
+                    <span className="text-xs font-semibold text-purple-700 truncate">{selectedAssignment.title}</span>
+                    <button onClick={() => setSelectedAssignmentId(null)} className="ml-auto text-purple-400 hover:text-red-500 text-[10px] font-bold">✕</button>
+                  </div>
+                )}
+              </div>
 
               <button 
                 onClick={handleAddAnotherModule}
@@ -172,6 +353,8 @@ export default function ModuleDetailsPage() {
                   {/* TEXTAREA */}
                   <textarea 
                     placeholder="Provide a detailed description of what students will learn in this module..."
+                    value={moduleDescription}
+                    onChange={e => setModuleDescription(e.target.value)}
                     className="w-full h-48 p-4 outline-none resize-none font-normal text-gray-600 placeholder-gray-400 leading-relaxed"
                   />
                 </div>
