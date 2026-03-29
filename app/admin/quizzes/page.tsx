@@ -1,8 +1,9 @@
 "use client";
 
-import { Search, Plus, ChevronDown, MoreVertical } from "lucide-react";
+import { Search, Plus, ChevronDown, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const QUIZZES_STORAGE_KEY = "admin_quizzes";
 
@@ -76,8 +77,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function QuizzesPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [savedRows, setSavedRows] = useState<QuizItem[]>([]);
 
   useEffect(() => {
@@ -117,17 +120,17 @@ export default function QuizzesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-8 flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-7xl p-6">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">Quiz Management</h1>
-          <p className="text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500">
             Manage and organize assessments with domains and tags.
           </p>
         </div>
         <Link
           href="/admin/quizzes/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 shadow-sm"
         >
           <Plus size={16} />
           Create New Quiz
@@ -152,8 +155,8 @@ export default function QuizzesPage() {
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
-          <div className="relative w-full md:max-w-xl">
+        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-sm">
             <Search
               size={16}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -166,8 +169,8 @@ export default function QuizzesPage() {
               className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
             />
           </div>
-          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-            <span>All Status</span>
+          <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+            <span className="whitespace-nowrap">All Status</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -179,7 +182,7 @@ export default function QuizzesPage() {
               <option value="SCHEDULED">Scheduled</option>
             </select>
             <ChevronDown size={15} />
-          </label>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -199,7 +202,7 @@ export default function QuizzesPage() {
               {filteredRows.map((quiz, index) => {
                 const rowId = quiz.id ?? `${quiz.title}-${index}`;
                 return (
-                <tr key={rowId} className="border-b border-slate-100 last:border-0">
+                <tr key={rowId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-4 font-semibold text-slate-800">{quiz.title}</td>
                   <td className="px-5 py-4 text-slate-600">{quiz.domain}</td>
                   <td className="px-5 py-4">
@@ -220,25 +223,36 @@ export default function QuizzesPage() {
                     <StatusBadge status={quiz.status} />
                   </td>
                   <td className="relative px-5 py-4 text-right">
-                    <details className="group relative inline-block">
-                      <summary className="list-none cursor-pointer rounded-md p-1 text-slate-500 hover:bg-slate-100">
-                        <MoreVertical size={16} />
-                      </summary>
-                      <div className="absolute right-0 top-8 z-20 w-28 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
+                    <button
+                      onClick={() => setOpenActionId(openActionId === rowId ? null : rowId)}
+                      className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {openActionId === rowId && (
+                      <div className="absolute right-5 top-12 z-20 w-32 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
                         <button
                           type="button"
-                          className="block w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          onClick={() => {
+                            setOpenActionId(null);
+                            router.push(`/admin/quizzes/edit/${rowId}`);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                         >
-                          Edit
+                          <Pencil size={13} className="text-slate-400" /> Edit
                         </button>
                         <button
                           type="button"
-                          className="block w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            setOpenActionId(null);
+                            router.push(`/admin/quizzes/delete/step1/${rowId}`);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
-                          Delete
+                          <Trash2 size={13} className="text-red-400" /> Delete
                         </button>
                       </div>
-                    </details>
+                    )}
                   </td>
                 </tr>
               )})}
