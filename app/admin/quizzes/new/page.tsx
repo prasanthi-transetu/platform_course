@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Plus, Search, SlidersHorizontal, CircleHelp, X } from "lucide-react";
+import { isEmpty, isPositiveNumber, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 const QUIZZES_STORAGE_KEY = "admin_quizzes";
 const availableDomains = ["COMPUTER SCI", "DATA SCI", "MATHS", "ENGINEERING"];
@@ -29,6 +30,8 @@ export default function NewQuizPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const filteredDomains = useMemo(
     () =>
@@ -61,13 +64,79 @@ export default function NewQuizPage() {
     setTagInput("");
   };
 
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    switch (field) {
+      case "title":
+        if (isEmpty(value)) error = "Quiz title is required";
+        else if (value.trim().length < 3) error = "Title must be at least 3 characters";
+        break;
+      case "durationMinutes":
+        if (isEmpty(value)) error = "Duration is required";
+        else if (!isPositiveNumber(value)) error = "Duration must be a positive number";
+        break;
+      case "totalMarks":
+        if (isEmpty(value)) error = "Total marks is required";
+        else if (!isPositiveNumber(value)) error = "Marks must be a positive number";
+        break;
+      case "domains":
+        if (selectedDomains.length === 0) error = "Select at least one domain";
+        break;
+    }
+    setErrors((prev) => {
+      if (error) return { ...prev, [field]: error };
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    return error;
+  };
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field, value);
+  };
+
+  const handleFieldChange = (field: string, value: string, setter: (v: string) => void) => {
+    setter(value);
+    if (errors[field]) {
+      setErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
+  const validateAll = (): boolean => {
+    const validations: [string, string][] = [
+      ["title", title],
+      ["durationMinutes", durationMinutes],
+      ["totalMarks", totalMarks],
+    ];
+    const allTouched: Record<string, boolean> = {};
+    let hasError = false;
+    for (const [field, value] of validations) {
+      allTouched[field] = true;
+      const error = validateField(field, value);
+      if (error) hasError = true;
+    }
+    if (selectedDomains.length === 0) {
+      allTouched["domains"] = true;
+      setErrors((prev) => ({ ...prev, domains: "Select at least one domain" }));
+      hasError = true;
+    }
+    setTouched((prev) => ({ ...prev, ...allTouched }));
+    return !hasError;
+  };
+
+  const getInputClass = (field: string, base: string) => {
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base;
+  };
+
   const handleCreateQuiz = (e?: React.FormEvent) => {
     e?.preventDefault();
     setFormError("");
     setFormSuccess("");
 
-    if (!title.trim()) {
-      setFormError("Quiz title is required.");
+    if (!validateAll()) {
+      setFormError("Please fix the errors above before creating the quiz.");
       return;
     }
 
@@ -123,43 +192,64 @@ export default function NewQuizPage() {
           <div className="grid gap-4 p-5 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Quiz Title
+                Quiz Title <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => handleFieldChange("title", e.target.value, setTitle)}
+                onBlur={() => handleFieldBlur("title", title)}
                 placeholder="e.g. Introduction to Data Structures Midterm"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
+                className={getInputClass("title", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2 transition-all duration-200")}
               />
+              {touched.title && errors.title && (
+                <p className={errorTextClass}>
+                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                  {errors.title}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Duration (Minutes)
+                Duration (Minutes) <span className="text-red-400">*</span>
               </label>
               <input
                 type="number"
                 value={durationMinutes}
-                onChange={(e) => setDurationMinutes(e.target.value)}
+                onChange={(e) => handleFieldChange("durationMinutes", e.target.value, setDurationMinutes)}
+                onBlur={() => handleFieldBlur("durationMinutes", durationMinutes)}
                 min={0}
                 placeholder="e.g. 60"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
+                className={getInputClass("durationMinutes", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2 transition-all duration-200")}
               />
+              {touched.durationMinutes && errors.durationMinutes && (
+                <p className={errorTextClass}>
+                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                  {errors.durationMinutes}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Total Marks
+                Total Marks <span className="text-red-400">*</span>
               </label>
               <input
                 type="number"
                 value={totalMarks}
-                onChange={(e) => setTotalMarks(e.target.value)}
+                onChange={(e) => handleFieldChange("totalMarks", e.target.value, setTotalMarks)}
+                onBlur={() => handleFieldBlur("totalMarks", totalMarks)}
                 min={0}
                 placeholder="e.g. 100"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2"
+                className={getInputClass("totalMarks", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 placeholder:text-slate-400 focus:ring-2 transition-all duration-200")}
               />
+              {touched.totalMarks && errors.totalMarks && (
+                <p className={errorTextClass}>
+                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                  {errors.totalMarks}
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -174,7 +264,7 @@ export default function NewQuizPage() {
           <div className="grid gap-4 p-5 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Domains
+                Domains <span className="text-red-400">*</span>
               </label>
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {selectedDomains.map((item) => (
@@ -233,6 +323,12 @@ export default function NewQuizPage() {
                 </div>
               )}
               <p className="mt-1 text-xs text-slate-400">Assign your quiz category tags by domain.</p>
+              {touched.domains && errors.domains && (
+                <p className={errorTextClass}>
+                  <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                  {errors.domains}
+                </p>
+              )}
             </div>
 
             <div>

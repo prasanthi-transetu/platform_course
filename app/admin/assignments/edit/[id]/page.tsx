@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   X, Info, LayoutGrid, Plus, Bold, Italic, List, 
   Link as LinkIcon, Code, ChevronLeft
 } from "lucide-react";
+import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 export default function EditAssignmentPage() {
   const params = useParams();
@@ -21,6 +22,10 @@ export default function EditAssignmentPage() {
     { name: "Documentation and Readability", marks: "20" }
   ]);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [formError, setFormError] = useState("");
+
   const handleAddCriteria = () => {
     setCriteria([...criteria, { name: "", marks: "0" }]);
   };
@@ -32,8 +37,95 @@ export default function EditAssignmentPage() {
   };
 
   const handleSave = () => {
-    // Mock save logic
+    setFormError("");
+    if (!validateAll()) {
+      setFormError("Please fix the errors above before saving.");
+      return;
+    }
     router.push("/admin/assignments");
+  };
+
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    switch (field) {
+      case "title":
+        if (isEmpty(value)) error = "Assignment title is required";
+        else if (value.trim().length < 3) error = "Title must be at least 3 characters";
+        break;
+      case "description":
+        if (isEmpty(value)) error = "Description is required";
+        else if (value.trim().length < 10) error = "Description must be at least 10 characters";
+        break;
+      case "tags":
+        if (isEmpty(value)) error = "At least one tag is required";
+        break;
+    }
+    setErrors((prev) => {
+      if (error) return { ...prev, [field]: error };
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    return error;
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field, value);
+  };
+
+  const handleFieldChange = (field: string, value: string, setter: (v: string) => void) => {
+    setter(value);
+    if (errors[field]) {
+      setErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
+  const validateCriteria = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    let hasError = false;
+    criteria.forEach((c, i) => {
+      if (isEmpty(c.name)) {
+        newErrors[`criteria_${i}_name`] = "Criteria name is required";
+        hasError = true;
+      }
+      if (isNaN(Number(c.marks)) || Number(c.marks) < 0) {
+        newErrors[`criteria_${i}_marks`] = "Must be a valid number";
+        hasError = true;
+      }
+    });
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return !hasError;
+  };
+
+  const validateAll = (): boolean => {
+    const allTouched: Record<string, boolean> = {};
+    let hasError = false;
+
+    for (const [field, value] of [["title", title], ["description", description], ["tags", tags]] as [string, string][]) {
+      allTouched[field] = true;
+      const error = validateField(field, value);
+      if (error) hasError = true;
+    }
+
+    const criteriaValid = validateCriteria();
+
+    setTouched((prev) => ({ ...prev, ...allTouched }));
+    return !hasError && criteriaValid;
+  };
+
+  const getInputClass = (field: string, base: string) => {
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base;
+  };
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null;
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    );
   };
 
   return (
@@ -75,13 +167,15 @@ export default function EditAssignmentPage() {
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Assignment Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Assignment Title <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  onChange={(e) => handleFieldChange("title", e.target.value, setTitle)}
+                  onBlur={() => handleBlur("title", title)}
+                  className={getInputClass("title", "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition")}
                 />
+                <ErrorMsg field="title" />
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -98,19 +192,21 @@ export default function EditAssignmentPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tags</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tags <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-700"
+                    onChange={(e) => handleFieldChange("tags", e.target.value, setTags)}
+                    onBlur={() => handleBlur("tags", tags)}
+                    className={getInputClass("tags", "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-700")}
                   />
+                  <ErrorMsg field="tags" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-                <div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-400">*</span></label>
+                <div className={`border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition ${touched.description && errors.description ? inputErrorClass : ""}`}>
                   <div className="bg-gray-50/50 border-b border-gray-200 px-3 py-2 flex items-center gap-1">
                     <button className="p-1.5 text-gray-500 hover:bg-gray-200 rounded transition"><Bold size={14} /></button>
                     <button className="p-1.5 text-gray-500 hover:bg-gray-200 rounded transition"><Italic size={14} /></button>
@@ -121,10 +217,12 @@ export default function EditAssignmentPage() {
                   </div>
                   <textarea
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => handleFieldChange("description", e.target.value, setDescription)}
+                    onBlur={() => handleBlur("description", description)}
                     className="w-full px-4 py-3 text-sm outline-none min-h-[160px] resize-y leading-relaxed text-gray-600"
                   />
                 </div>
+                <ErrorMsg field="description" />
               </div>
             </div>
           </div>
@@ -152,17 +250,29 @@ export default function EditAssignmentPage() {
                     <input
                       type="text"
                       value={c.name}
-                      onChange={(e) => handleUpdateCriteria(i, "name", e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                      onChange={(e) => { handleUpdateCriteria(i, "name", e.target.value); const key = `criteria_${i}_name`; if (errors[key]) { setErrors(prev => { const n = {...prev}; delete n[key]; return n; }); } }}
+                      className={`w-full border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors[`criteria_${i}_name`] ? inputErrorClass : ""}`}
                     />
+                    {errors[`criteria_${i}_name`] && (
+                      <p className={errorTextClass}>
+                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                        {errors[`criteria_${i}_name`]}
+                      </p>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <input
                       type="text"
                       value={c.marks}
-                      onChange={(e) => handleUpdateCriteria(i, "marks", e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-center font-bold"
+                      onChange={(e) => { handleUpdateCriteria(i, "marks", e.target.value); const key = `criteria_${i}_marks`; if (errors[key]) { setErrors(prev => { const n = {...prev}; delete n[key]; return n; }); } }}
+                      className={`w-full border border-gray-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-center font-bold transition-all duration-200 ${errors[`criteria_${i}_marks`] ? inputErrorClass : ""}`}
                     />
+                    {errors[`criteria_${i}_marks`] && (
+                      <p className={errorTextClass}>
+                        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                        {errors[`criteria_${i}_marks`]}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

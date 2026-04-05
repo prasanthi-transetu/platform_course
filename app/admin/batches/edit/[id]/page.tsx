@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { UploadCloud } from "lucide-react";
 import { useParams } from "next/navigation";
+import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 export default function EditBatchPage() {
 
@@ -11,6 +12,24 @@ export default function EditBatchPage() {
 
   const [batchName,setBatchName] = useState("Computer Science - 2024 - Section A");
   const [file,setFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateBatchName = (value: string): string => {
+    let error = "";
+    if (isEmpty(value)) error = "Batch name is required";
+    setErrors(prev => {
+      if (error) return { ...prev, batchName: error };
+      const n = { ...prev }; delete n.batchName; return n;
+    });
+    return error;
+  };
+
+  const handleSave = () => {
+    setTouched(prev => ({ ...prev, batchName: true }));
+    if (validateBatchName(batchName)) return;
+    // Save logic here
+  };
 
   const handleFileChange = (e:any) => {
     if(e.target.files[0]){
@@ -61,15 +80,22 @@ export default function EditBatchPage() {
 
           <div>
             <label className="text-sm text-gray-600 font-medium">
-              Batch Name
+              Batch Name <span className="text-red-400">*</span>
             </label>
 
             <input
               type="text"
               value={batchName}
-              onChange={(e)=>setBatchName(e.target.value)}
-              className="w-full mt-1 border rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
+              onChange={(e)=>{setBatchName(e.target.value); if(errors.batchName){setErrors(prev=>{const n={...prev};delete n.batchName;return n;});}}}
+              onBlur={()=>{setTouched(prev=>({...prev,batchName:true}));validateBatchName(batchName);}}
+              className={`w-full mt-1 border rounded-lg p-3 text-gray-800 focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${touched.batchName && errors.batchName ? inputErrorClass : ""}`}
             />
+            {touched.batchName && errors.batchName && (
+              <p className={errorTextClass}>
+                <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                {errors.batchName}
+              </p>
+            )}
           </div>
 
 
@@ -240,7 +266,10 @@ export default function EditBatchPage() {
               Cancel
             </Link>
 
-            <button className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button
+              onClick={handleSave}
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
               Save Changes
             </button>
 

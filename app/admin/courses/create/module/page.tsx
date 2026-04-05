@@ -25,6 +25,7 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ResourceModals from "@/components/modals/ResourceModals";
+import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 // ─── Static sample data (mirrors quizzes/assignments pages) ───────────────────
 const SAMPLE_QUIZZES = [
@@ -53,6 +54,33 @@ export default function ModuleDetailsPage() {
   const [moduleDescription, setModuleDescription] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"pdf" | "image" | "video" | "url" | null>(null);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    if (field === "moduleTitle" && isEmpty(value)) error = "Module title is required";
+    if (field === "moduleDescription" && isEmpty(value)) error = "Module description is required";
+    setErrors(prev => {
+      if (error) return { ...prev, [field]: error };
+      const n = { ...prev }; delete n[field]; return n;
+    });
+    return error;
+  };
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field, value);
+  };
+
+  const handleSaveModule = () => {
+    const t1 = validateField("moduleTitle", moduleTitle);
+    const t2 = validateField("moduleDescription", moduleDescription);
+    setTouched({ moduleTitle: true, moduleDescription: true });
+    if (t1 || t2) return;
+    alert("Module saved successfully!");
+  };
 
   // Dropdown open states
   const [quizOpen, setQuizOpen] = useState(false);
@@ -116,7 +144,10 @@ export default function ModuleDetailsPage() {
               Back to Course
             </button>
           </Link>
-          <button className="px-8 py-2 rounded-lg bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 transition-all text-xs">
+          <button
+            onClick={handleSaveModule}
+            className="px-8 py-2 rounded-lg bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 transition-all text-xs"
+          >
             Save
           </button>
         </div>
@@ -324,18 +355,25 @@ export default function ModuleDetailsPage() {
             </div>
             <div className="p-8 flex flex-col gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Module Title</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Module Title <span className="text-red-400">*</span></label>
                 <input 
                   type="text"
                   value={moduleTitle}
-                  onChange={(e) => setModuleTitle(e.target.value)}
+                  onChange={(e) => { setModuleTitle(e.target.value); if(errors.moduleTitle){setErrors(prev=>{const n={...prev};delete n.moduleTitle;return n;});} }}
+                  onBlur={() => handleFieldBlur("moduleTitle", moduleTitle)}
                   placeholder="e.g., Introduction to UI Design Fundamentals"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-gray-800"
+                  className={`w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium text-gray-800 ${touched.moduleTitle && errors.moduleTitle ? inputErrorClass : ""}`}
                 />
+                {touched.moduleTitle && errors.moduleTitle && (
+                  <p className={errorTextClass}>
+                    <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                    {errors.moduleTitle}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Module Description</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Module Description <span className="text-red-400">*</span></label>
                 <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
                   {/* TOOLBAR */}
                   <div className="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-100 overflow-x-auto">

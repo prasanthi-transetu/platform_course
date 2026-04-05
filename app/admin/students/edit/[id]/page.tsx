@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { X } from "lucide-react"
+import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation"
 
 export default function EditStudentPage() {
 
@@ -38,45 +39,89 @@ export default function EditStudentPage() {
 
   }, [studentId])
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
   /* HANDLE INPUT */
 
   const handleChange = (e:any) => {
-
     const { name, value } = e.target
+    setStudent(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors(prev => { const n = {...prev}; delete n[name]; return n; })
+    }
+  }
 
-    setStudent(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  const handleBlur = (e:any) => {
+    const { name } = e.target
+    setTouched(prev => ({ ...prev, [name]: true }))
+    validateField(name, student[name as keyof typeof student])
+  }
 
+  const validateField = (name: string, value: string): string => {
+    let error = ""
+    switch (name) {
+      case "name":
+        if (isEmpty(value)) error = "Student name is required"
+        break
+      case "email":
+        if (isEmpty(value)) error = "Email is required"
+        else if (!isValidEmail(value)) error = "Invalid email format"
+        break
+      case "institution":
+        if (isEmpty(value)) error = "Institution is required"
+        break
+      case "course":
+        if (isEmpty(value)) error = "Course is required"
+        break
+    }
+    setErrors(prev => {
+      if (error) return { ...prev, [name]: error }
+      const n = { ...prev }; delete n[name]; return n
+    })
+    return error
+  }
+
+  const validateAll = (): boolean => {
+    const fields = ["name", "email", "institution", "course"]
+    const allTouched: Record<string, boolean> = {}
+    let hasError = false
+    for (const field of fields) {
+      allTouched[field] = true
+      if (validateField(field, student[field as keyof typeof student])) hasError = true
+    }
+    setTouched(prev => ({ ...prev, ...allTouched }))
+    return !hasError
+  }
+
+  const getInputClass = (field: string) => {
+    const base = "border rounded-lg w-full px-3 py-2 text-gray-900 transition-all duration-200"
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base
+  }
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    )
   }
 
   /* UPDATE STUDENT */
 
   const updateStudent = () => {
+    if (!validateAll()) return
 
-    const storedStudents =
-      JSON.parse(localStorage.getItem("students") || "[]")
-
-    const updatedStudents =
-      storedStudents.map((s:any)=>{
-
-        if (s.id === studentId) {
-          return student
-        }
-
-        return s
-      })
-
-    localStorage.setItem(
-      "students",
-      JSON.stringify(updatedStudents)
-    )
-
+    const storedStudents = JSON.parse(localStorage.getItem("students") || "[]")
+    const updatedStudents = storedStudents.map((s:any)=>{
+      if (s.id === studentId) return student
+      return s
+    })
+    localStorage.setItem("students", JSON.stringify(updatedStudents))
     alert("Student updated successfully!")
-
     router.push("/admin/students")
-
   }
 
   return (
@@ -122,47 +167,55 @@ export default function EditStudentPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-700">Full Name</label>
+            <label className="text-sm text-gray-700">Full Name <span className="text-red-400">*</span></label>
             <input
               type="text"
               name="name"
               value={student.name}
               onChange={handleChange}
-              className="border rounded-lg w-full px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("name")}
             />
+            <ErrorMsg field="name" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700">Email</label>
+            <label className="text-sm text-gray-700">Email <span className="text-red-400">*</span></label>
             <input
               type="email"
               name="email"
               value={student.email}
               onChange={handleChange}
-              className="border rounded-lg w-full px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("email")}
             />
+            <ErrorMsg field="email" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700">Institution</label>
+            <label className="text-sm text-gray-700">Institution <span className="text-red-400">*</span></label>
             <input
               type="text"
               name="institution"
               value={student.institution}
               onChange={handleChange}
-              className="border rounded-lg w-full px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("institution")}
             />
+            <ErrorMsg field="institution" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700">Course</label>
+            <label className="text-sm text-gray-700">Course <span className="text-red-400">*</span></label>
             <input
               type="text"
               name="course"
               value={student.course}
               onChange={handleChange}
-              className="border rounded-lg w-full px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("course")}
             />
+            <ErrorMsg field="course" />
           </div>
 
           <div>

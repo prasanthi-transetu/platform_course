@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, Trash2 } from "lucide-react"
+import { isEmpty, isValidEmail, hasMinLength, isValidPhone, inputErrorClass, errorTextClass } from "@/lib/validation"
 
 export default function AddInstitutionPage() {
 
@@ -16,6 +17,10 @@ export default function AddInstitutionPage() {
   const [contacts, setContacts] = useState([
     { name: "", role: "", email: "", phone: "" },
   ])
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const [formError, setFormError] = useState("")
 
   const addContact = () => {
     if (contacts.length < 3) {
@@ -32,9 +37,98 @@ export default function AddInstitutionPage() {
     const updated=[...contacts]
     updated[index][field as keyof typeof updated[number]] = value
     setContacts(updated)
+
+    // Clear contact-specific error
+    const key = `contact_${index}_${field}`
+    if (errors[key]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    }
+  }
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    validateField(field, value)
+  }
+
+  const validateField = (field: string, value: string): string => {
+    let error = ""
+
+    switch (field) {
+      case "name":
+        if (isEmpty(value)) error = "Institution name is required"
+        else if (!hasMinLength(value, 2)) error = "Name must be at least 2 characters"
+        break
+      case "email":
+        if (isEmpty(value)) error = "Official email is required"
+        else if (!isValidEmail(value)) error = "Please enter a valid email address"
+        break
+      case "location":
+        if (isEmpty(value)) error = "Location is required"
+        break
+    }
+
+    setErrors((prev) => {
+      if (error) return { ...prev, [field]: error }
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+
+    return error
+  }
+
+  const validateContacts = (): boolean => {
+    const newErrors: Record<string, string> = {}
+    let hasError = false
+
+    contacts.forEach((contact, index) => {
+      if (isEmpty(contact.name)) {
+        newErrors[`contact_${index}_name`] = "Contact name is required"
+        hasError = true
+      }
+      if (!isEmpty(contact.email) && !isValidEmail(contact.email)) {
+        newErrors[`contact_${index}_email`] = "Invalid email format"
+        hasError = true
+      }
+      if (!isEmpty(contact.phone) && !isValidPhone(contact.phone)) {
+        newErrors[`contact_${index}_phone`] = "Invalid phone number"
+        hasError = true
+      }
+    })
+
+    setErrors((prev) => ({ ...prev, ...newErrors }))
+    return !hasError
+  }
+
+  const validateAll = (): boolean => {
+    const fields = ["name", "email", "location"]
+    const allTouched: Record<string, boolean> = {}
+    let hasError = false
+
+    for (const field of fields) {
+      allTouched[field] = true
+      const values: Record<string, string> = { name, email, location }
+      const error = validateField(field, values[field])
+      if (error) hasError = true
+    }
+
+    const contactsValid = validateContacts()
+
+    setTouched((prev) => ({ ...prev, ...allTouched }))
+    return !hasError && contactsValid
   }
 
   const handleSubmit = () => {
+    setFormError("")
+
+    if (!validateAll()) {
+      setFormError("Please fix the errors above before submitting.")
+      return
+    }
 
     const newInstitution = {
       id:`INST-${Date.now()}`,
@@ -53,6 +147,38 @@ export default function AddInstitutionPage() {
     )
 
     router.push("/admin/institutions")
+  }
+
+  const getInputClass = (field: string) => {
+    const base = "w-full border rounded-lg px-3 py-2 text-gray-900 transition-all duration-200"
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base
+  }
+
+  const getContactInputClass = (index: number, field: string) => {
+    const key = `contact_${index}_${field}`
+    const base = "border rounded-lg px-3 py-2 text-gray-900 transition-all duration-200"
+    return errors[key] ? `${base} ${inputErrorClass}` : base
+  }
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    )
+  }
+
+  const ContactErrorMsg = ({ index, field }: { index: number, field: string }) => {
+    const key = `contact_${index}_${field}`
+    if (!errors[key]) return null
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[key]}
+      </p>
+    )
   }
 
   return (
@@ -81,40 +207,46 @@ export default function AddInstitutionPage() {
 
           <div>
             <label className="text-sm text-gray-800">
-              Institution Name
+              Institution Name <span className="text-red-400">*</span>
             </label>
 
             <input
               value={name}
               onChange={(e)=>setName(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={() => handleFieldBlur("name", name)}
+              className={getInputClass("name")}
             />
+            <ErrorMsg field="name" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
 
             <div>
               <label className="text-sm text-gray-800">
-                Official Email
+                Official Email <span className="text-red-400">*</span>
               </label>
 
               <input
                 value={email}
                 onChange={(e)=>setEmail(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                onBlur={() => handleFieldBlur("email", email)}
+                className={getInputClass("email")}
               />
+              <ErrorMsg field="email" />
             </div>
 
             <div>
               <label className="text-sm text-gray-800">
-                Location
+                Location <span className="text-red-400">*</span>
               </label>
 
               <input
                 value={location}
                 onChange={(e)=>setLocation(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                onBlur={() => handleFieldBlur("location", location)}
+                className={getInputClass("location")}
               />
+              <ErrorMsg field="location" />
             </div>
 
           </div>
@@ -163,12 +295,15 @@ export default function AddInstitutionPage() {
 
               <div className="grid grid-cols-2 gap-4">
 
-                <input
-                  placeholder="Name"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.name}
-                  onChange={(e)=>handleChange(index,"name",e.target.value)}
-                />
+                <div>
+                  <input
+                    placeholder="Name *"
+                    className={getContactInputClass(index, "name")}
+                    value={contact.name}
+                    onChange={(e)=>handleChange(index,"name",e.target.value)}
+                  />
+                  <ContactErrorMsg index={index} field="name" />
+                </div>
 
                 <input
                   placeholder="Role"
@@ -181,19 +316,25 @@ export default function AddInstitutionPage() {
 
               <div className="grid grid-cols-2 gap-4">
 
-                <input
-                  placeholder="Email"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.email}
-                  onChange={(e)=>handleChange(index,"email",e.target.value)}
-                />
+                <div>
+                  <input
+                    placeholder="Email"
+                    className={getContactInputClass(index, "email")}
+                    value={contact.email}
+                    onChange={(e)=>handleChange(index,"email",e.target.value)}
+                  />
+                  <ContactErrorMsg index={index} field="email" />
+                </div>
 
-                <input
-                  placeholder="Phone"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.phone}
-                  onChange={(e)=>handleChange(index,"phone",e.target.value)}
-                />
+                <div>
+                  <input
+                    placeholder="Phone"
+                    className={getContactInputClass(index, "phone")}
+                    value={contact.phone}
+                    onChange={(e)=>handleChange(index,"phone",e.target.value)}
+                  />
+                  <ContactErrorMsg index={index} field="phone" />
+                </div>
 
               </div>
 
@@ -201,6 +342,14 @@ export default function AddInstitutionPage() {
           ))}
 
         </div>
+
+        {/* Form Error */}
+        {formError && (
+          <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+            {formError}
+          </p>
+        )}
 
         {/* Buttons */}
 

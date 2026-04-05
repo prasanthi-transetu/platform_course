@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { isEmpty, isValidEmail, hasMinLength, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 export default function AddStudentPage() {
 
@@ -17,15 +18,81 @@ export default function AddStudentPage() {
     status: "Active",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setStudent({
-      ...student,
-      [e.target.name]: e.target.value,
+    const { name, value } = e.target;
+    setStudent({ ...student, [name]: value });
+
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    validateField(name, student[name as keyof typeof student]);
+  };
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+
+    switch (name) {
+      case "id":
+        if (isEmpty(value)) error = "Student ID is required";
+        else if (!hasMinLength(value, 3)) error = "Student ID must be at least 3 characters";
+        break;
+      case "name":
+        if (isEmpty(value)) error = "Student name is required";
+        else if (!hasMinLength(value, 2)) error = "Name must be at least 2 characters";
+        break;
+      case "email":
+        if (isEmpty(value)) error = "Email is required";
+        else if (!isValidEmail(value)) error = "Please enter a valid email address";
+        break;
+      case "institution":
+        if (isEmpty(value)) error = "Institution is required";
+        break;
+      case "course":
+        if (isEmpty(value)) error = "Course is required";
+        break;
+    }
+
+    setErrors((prev) => {
+      if (error) return { ...prev, [name]: error };
+      const next = { ...prev };
+      delete next[name];
+      return next;
     });
+
+    return error;
+  };
+
+  const validateAll = (): boolean => {
+    const fields = ["id", "name", "email", "institution", "course"];
+    const allTouched: Record<string, boolean> = {};
+    let hasError = false;
+
+    for (const field of fields) {
+      allTouched[field] = true;
+      const error = validateField(field, student[field as keyof typeof student]);
+      if (error) hasError = true;
+    }
+
+    setTouched((prev) => ({ ...prev, ...allTouched }));
+    return !hasError;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateAll()) return;
 
     const existingStudents =
       JSON.parse(localStorage.getItem("students") || "[]");
@@ -35,6 +102,21 @@ export default function AddStudentPage() {
     localStorage.setItem("students", JSON.stringify(updatedStudents));
 
     router.push("/admin/students");
+  };
+
+  const getInputClass = (field: string) => {
+    const base = "w-full border rounded-lg px-3 py-2 text-gray-900 transition-all duration-200";
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base;
+  };
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null;
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    );
   };
 
   return (
@@ -62,77 +144,82 @@ export default function AddStudentPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Student ID
+              Student ID <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="id"
               value={student.id}
               onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("id")}
               placeholder="STU-006"
             />
+            <ErrorMsg field="id" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Student Name
+              Student Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="name"
               value={student.name}
               onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("name")}
               placeholder="Enter student name"
             />
+            <ErrorMsg field="name" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Email
+              Email <span className="text-red-400">*</span>
             </label>
             <input
               type="email"
               name="email"
               value={student.email}
               onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("email")}
               placeholder="Enter email"
             />
+            <ErrorMsg field="email" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Institution
+              Institution <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="institution"
               value={student.institution}
               onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("institution")}
               placeholder="Enter institution"
             />
+            <ErrorMsg field="institution" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Course
+              Course <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="course"
               value={student.course}
               onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={handleBlur}
+              className={getInputClass("course")}
               placeholder="Enter course"
             />
+            <ErrorMsg field="course" />
           </div>
 
           <div>

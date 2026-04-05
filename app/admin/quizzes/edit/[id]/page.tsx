@@ -6,6 +6,7 @@ import {
   ChevronRight, Plus, X, Info, LayoutGrid, Pencil, Trash2, Check, Shuffle,
 } from "lucide-react";
 import Link from "next/link";
+import { isEmpty, isPositiveNumber, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 const availableDomains = ["Computer Science", "Data Engineering", "Mathematics", "Engineering"];
 
@@ -50,7 +51,79 @@ export default function EditQuizPage() {
 
   const removeQuestion = (id: string) => setQuestions((prev) => prev.filter((q) => q.id !== id));
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [formError, setFormError] = useState("");
+
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    switch (field) {
+      case "title":
+        if (isEmpty(value)) error = "Quiz title is required";
+        else if (value.trim().length < 3) error = "Title must be at least 3 characters";
+        break;
+      case "durationMinutes":
+        if (isEmpty(value)) error = "Duration is required";
+        else if (!isPositiveNumber(value)) error = "Must be a positive number";
+        break;
+      case "totalMarks":
+        if (isEmpty(value)) error = "Total marks is required";
+        else if (!isPositiveNumber(value)) error = "Must be a positive number";
+        break;
+    }
+    setErrors((prev) => {
+      if (error) return { ...prev, [field]: error };
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    return error;
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateField(field, value);
+  };
+
+  const handleFieldChange = (field: string, value: string, setter: (v: string) => void) => {
+    setter(value);
+    if (errors[field]) {
+      setErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+    }
+  };
+
+  const validateAll = (): boolean => {
+    const allTouched: Record<string, boolean> = {};
+    let hasError = false;
+    for (const [field, value] of [["title", title], ["durationMinutes", durationMinutes], ["totalMarks", totalMarks]] as [string, string][]) {
+      allTouched[field] = true;
+      const error = validateField(field, value);
+      if (error) hasError = true;
+    }
+    setTouched((prev) => ({ ...prev, ...allTouched }));
+    return !hasError;
+  };
+
+  const getInputClass = (field: string, base: string) => {
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base;
+  };
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null;
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    );
+  };
+
   const handleUpdate = () => {
+    setFormError("");
+    if (!validateAll()) {
+      setFormError("Please fix the errors before updating.");
+      return;
+    }
     router.push("/admin/quizzes");
   };
 
@@ -96,31 +169,37 @@ export default function EditQuizPage() {
             </div>
             <div className="grid gap-4 p-5 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700">Quiz Title</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Quiz Title <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2"
+                  onChange={(e) => handleFieldChange("title", e.target.value, setTitle)}
+                  onBlur={() => handleBlur("title", title)}
+                  className={getInputClass("title", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2 transition-all duration-200")}
                 />
+                <ErrorMsg field="title" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Duration (Minutes)</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Duration (Minutes) <span className="text-red-400">*</span></label>
                 <input
                   type="number"
                   value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2"
+                  onChange={(e) => handleFieldChange("durationMinutes", e.target.value, setDurationMinutes)}
+                  onBlur={() => handleBlur("durationMinutes", durationMinutes)}
+                  className={getInputClass("durationMinutes", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2 transition-all duration-200")}
                 />
+                <ErrorMsg field="durationMinutes" />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Total Marks</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Total Marks <span className="text-red-400">*</span></label>
                 <input
                   type="number"
                   value={totalMarks}
-                  onChange={(e) => setTotalMarks(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2"
+                  onChange={(e) => handleFieldChange("totalMarks", e.target.value, setTotalMarks)}
+                  onBlur={() => handleBlur("totalMarks", totalMarks)}
+                  className={getInputClass("totalMarks", "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-blue-200 focus:ring-2 transition-all duration-200")}
                 />
+                <ErrorMsg field="totalMarks" />
               </div>
             </div>
           </section>

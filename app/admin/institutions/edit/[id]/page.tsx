@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { Plus, Trash2 } from "lucide-react"
+import { isEmpty, isValidEmail, isValidPhone, inputErrorClass, errorTextClass } from "@/lib/validation"
 
 export default function EditInstitutionPage() {
 
@@ -65,36 +66,88 @@ export default function EditInstitutionPage() {
     ] = value
 
     setContacts(updated)
+  }
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }))
+    validateField(field, value)
+  }
+
+  const validateField = (field: string, value: string): string => {
+    let error = ""
+    switch (field) {
+      case "name":
+        if (isEmpty(value)) error = "Institution name is required"
+        break
+      case "email":
+        if (isEmpty(value)) error = "Email is required"
+        else if (!isValidEmail(value)) error = "Invalid email format"
+        break
+      case "location":
+        if (isEmpty(value)) error = "Location is required"
+        break
+    }
+    setErrors(prev => {
+      if (error) return { ...prev, [field]: error }
+      const n = { ...prev }; delete n[field]; return n
+    })
+    return error
+  }
+
+  const validateContacts = (): boolean => {
+    const newErrors: Record<string, string> = {}
+    let hasError = false
+    contacts.forEach((c, i) => {
+      if (isEmpty(c.name)) { newErrors[`c_${i}_name`] = "Name required"; hasError = true }
+      if (!isEmpty(c.email) && !isValidEmail(c.email)) { newErrors[`c_${i}_email`] = "Invalid email"; hasError = true }
+      if (!isEmpty(c.phone) && !isValidPhone(c.phone)) { newErrors[`c_${i}_phone`] = "Invalid phone"; hasError = true }
+    })
+    setErrors(prev => ({ ...prev, ...newErrors }))
+    return !hasError
+  }
+
+  const validateAll = (): boolean => {
+    const allTouched: Record<string, boolean> = {}
+    let hasError = false
+    for (const [field, value] of [["name", name], ["email", email], ["location", location]] as [string, string][]) {
+      allTouched[field] = true
+      if (validateField(field, value)) hasError = true
+    }
+    const contactsValid = validateContacts()
+    setTouched(prev => ({ ...prev, ...allTouched }))
+    return !hasError && contactsValid
+  }
+
+  const getInputClass = (field: string) => {
+    const base = "w-full border rounded-lg px-3 py-2 text-gray-900 transition-all duration-200"
+    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base
+  }
+
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!touched[field] || !errors[field]) return null
+    return (
+      <p className={errorTextClass}>
+        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+        {errors[field]}
+      </p>
+    )
   }
 
   const handleUpdate=()=>{
+    if (!validateAll()) return
 
-    const stored =
-      JSON.parse(localStorage.getItem("institutions") || "[]")
-
+    const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
     const updated = stored.map((inst:any)=>{
-
       if(inst.id === params.id){
-        return {
-          ...inst,
-          name,
-          email,
-          location
-        }
+        return { ...inst, name, email, location }
       }
-
       return inst
-
     })
-
-    localStorage.setItem(
-      "institutions",
-      JSON.stringify(updated)
-    )
-
+    localStorage.setItem("institutions", JSON.stringify(updated))
     router.push("/admin/institutions")
-
   }
 
   return (
@@ -127,14 +180,16 @@ export default function EditInstitutionPage() {
           <div>
 
             <label className="text-xs text-gray-600">
-              Institution Name
+              Institution Name <span className="text-red-400">*</span>
             </label>
 
             <input
               value={name}
               onChange={(e)=>setName(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 text-gray-900"
+              onBlur={() => handleFieldBlur("name", name)}
+              className={getInputClass("name")}
             />
+            <ErrorMsg field="name" />
 
           </div>
 
@@ -143,28 +198,32 @@ export default function EditInstitutionPage() {
             <div>
 
               <label className="text-xs text-gray-600">
-                Official Email Address
+                Official Email <span className="text-red-400">*</span>
               </label>
 
               <input
                 value={email}
                 onChange={(e)=>setEmail(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                onBlur={() => handleFieldBlur("email", email)}
+                className={getInputClass("email")}
               />
+              <ErrorMsg field="email" />
 
             </div>
 
             <div>
 
               <label className="text-xs text-gray-600">
-                Location
+                Location <span className="text-red-400">*</span>
               </label>
 
               <input
                 value={location}
                 onChange={(e)=>setLocation(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-gray-900"
+                onBlur={() => handleFieldBlur("location", location)}
+                className={getInputClass("location")}
               />
+              <ErrorMsg field="location" />
 
             </div>
 
