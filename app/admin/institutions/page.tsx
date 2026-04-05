@@ -6,7 +6,8 @@ import {
   Settings,
   BookOpen,
   Clock,
-  MoreVertical
+  MoreVertical,
+  Users
 } from "lucide-react"
 
 import Link from "next/link"
@@ -15,6 +16,7 @@ export default function InstitutionsPage() {
 
   const [institutions, setInstitutions] = useState<any[]>([])
   const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [openContacts, setOpenContacts] = useState<number | null>(null)
 
   const defaultInstitutions = [
 
@@ -24,6 +26,10 @@ export default function InstitutionsPage() {
       email: "admin@oxford.edu",
       location: "London, UK",
       status: "Active",
+      contacts: [
+        { name: "Arthur Pendragon", email: "arthur@oxford.edu", phone: "+44 20 7946 0958" },
+        { name: "Merlin Ambrosius", email: "merlin@oxford.edu", phone: "+44 20 7946 1234" }
+      ]
     },
 
     {
@@ -32,6 +38,9 @@ export default function InstitutionsPage() {
       email: "m.chen@stanford.edu",
       location: "California, USA",
       status: "Active",
+      contacts: [
+        { name: "Ming Chen", email: "m.chen@stanford.edu", phone: "+1 650 555 0198" }
+      ]
     },
 
     {
@@ -40,6 +49,7 @@ export default function InstitutionsPage() {
       email: "s.jenkins@melit.edu.au",
       location: "Melbourne, AU",
       status: "Inactive",
+      contacts: []
     },
 
     {
@@ -48,6 +58,10 @@ export default function InstitutionsPage() {
       email: "h.tanaka@tokyotech.jp",
       location: "Tokyo, JP",
       status: "Active",
+      contacts: [
+        { name: "Hiro Tanaka", email: "h.tanaka@tokyotech.jp", phone: "+81 3 1234 5678" },
+        { name: "Kenji Sato", email: "k.sato@tokyotech.jp", phone: "+81 3 9876 5432" }
+      ]
     },
 
     {
@@ -56,6 +70,9 @@ export default function InstitutionsPage() {
       email: "contact@newera.edu",
       location: "Toronto, CA",
       status: "Active",
+      contacts: [
+        { name: "Sarah Connor", email: "sarah.c@newera.edu", phone: "+1 416 555 0147" }
+      ]
     },
 
   ]
@@ -226,6 +243,10 @@ export default function InstitutionsPage() {
               </th>
 
               <th className="p-4 text-left">
+                Contacts
+              </th>
+
+              <th className="p-4 text-left">
                 Status
               </th>
 
@@ -260,6 +281,40 @@ export default function InstitutionsPage() {
 
                 <td className="p-4 text-gray-800">
                   {inst.location}
+                </td>
+
+                <td className="p-4 text-gray-800 relative">
+                  <button 
+                    onClick={() => setOpenContacts(openContacts === index ? null : index)}
+                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <Users size={16} />
+                    <span className="text-xs font-semibold">{inst.contacts?.length || 0}</span>
+                  </button>
+
+                  {openContacts === index && (
+                    <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-100 rounded-lg shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
+                      <div className="bg-gray-50 border-b px-4 py-2 flex justify-between items-center">
+                         <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Points of Contact</span>
+                         <button onClick={() => setOpenContacts(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto w-full">
+                        {inst.contacts?.length > 0 ? (
+                          <div className="divide-y divide-gray-50">
+                            {inst.contacts.map((contact: any, i: number) => (
+                              <div key={i} className="p-3 hover:bg-gray-50/50 transition-colors">
+                                <p className="text-sm font-medium text-gray-900">{contact.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{contact.email}</p>
+                                <p className="text-xs text-gray-500">{contact.phone}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center text-xs text-gray-500">No contacts available.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </td>
 
                 <td className="p-4">
