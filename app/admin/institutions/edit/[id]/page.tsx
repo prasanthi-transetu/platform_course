@@ -152,9 +152,9 @@ export default function EditInstitutionPage() {
 
   return (
 
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
 
-      <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
+      <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-lg p-8">
 
         {/* Header */}
 
