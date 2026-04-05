@@ -32,6 +32,7 @@ export default function EditInstitutionPage() {
       setName(inst.name)
       setEmail(inst.email)
       setLocation(inst.location)
+      if (inst.contacts?.length > 0) setContacts(inst.contacts)
     }
 
   },[params.id])
@@ -142,7 +143,7 @@ export default function EditInstitutionPage() {
     const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
     const updated = stored.map((inst:any)=>{
       if(inst.id === params.id){
-        return { ...inst, name, email, location }
+        return { ...inst, name, email, location, contacts }
       }
       return inst
     })

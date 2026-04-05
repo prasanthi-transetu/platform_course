@@ -135,7 +135,8 @@ export default function AddInstitutionPage() {
       name,
       email,
       location,
-      status:"Active"
+      status:"Active",
+      contacts
     }
 
     const existing =
