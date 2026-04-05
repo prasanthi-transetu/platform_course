@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { X, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 interface UserData {
   id: string;
@@ -19,6 +21,64 @@ export default function UsersPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  // Modals state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserData | null>(null);
+  const [deleteUser, setDeleteUser] = useState<UserData | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Institution Representative", institution: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateField = (field: string, value: string, isEdit = false): string => {
+    let error = "";
+    if (field === "name" && isEmpty(value)) error = "Name is required";
+    if (field === "email") {
+      if (isEmpty(value)) error = "Email is required";
+      else if (!isValidEmail(value)) error = "Invalid email format";
+    }
+    if (field === "password" && !isEdit && isEmpty(value)) error = "Password is required";
+    
+    setErrors(prev => {
+      if (error) return { ...prev, [field]: error };
+      const n = { ...prev }; delete n[field]; return n;
+    });
+    return error;
+  };
+
+  const handleValidation = (isEdit = false) => {
+    const fields = ["name", "email", "password"];
+    const allTouched: Record<string, boolean> = {};
+    let hasError = false;
+    fields.forEach(f => {
+      allTouched[f] = true;
+      if (validateField(f, formData[f as keyof typeof formData], isEdit)) hasError = true;
+    });
+    setTouched(prev => ({ ...prev, ...allTouched }));
+    return !hasError;
+  };
+
+  const handleCreateSubmit = () => {
+    if (handleValidation(false)) {
+      setIsCreateModalOpen(false);
+      alert("User created successfully!");
+    }
+  };
+
+  const handleEditSubmit = () => {
+    if (handleValidation(true)) {
+      setEditUser(null);
+      alert("User updated successfully!");
+    }
+  };
+
+  const handleDeleteSubmit = () => {
+    setDeleteUser(null);
+    alert("User deleted successfully!");
+  };
 
   const acceptedUsers: UserData[] = [
     {
@@ -112,7 +172,10 @@ export default function UsersPage() {
           </p>
         </div>
 
-        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow transition-colors">
+        <button 
+          onClick={() => { setFormData({ name: "", email: "", password: "", role: "Institution Representative", institution: "" }); setErrors({}); setTouched({}); setIsCreateModalOpen(true); }}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow transition-colors"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -280,20 +343,21 @@ export default function UsersPage() {
                            </>
                          ) : (
                            <>
-                              <Link
-                                href={`/admin/users/edit/${encodeURIComponent(u.id)}`}
-                                className="block w-full text-left px-4 py-2 text-sm hover:text-blue-600 hover:bg-blue-50"
-                                onClick={() => setOpenMenu(null)}
+                              <button
+                                onClick={() => {
+                                  setFormData({ name: u.name, email: u.email, password: "", role: u.role, institution: "" });
+                                  setErrors({}); setTouched({}); setEditUser(u); setOpenMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
-                                Edit
-                              </Link>
-                              <Link
-                                href={`/admin/users/delete/${encodeURIComponent(u.id)}`}
-                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                onClick={() => setOpenMenu(null)}
+                                <Pencil size={14} className="text-gray-500" /> Edit
+                              </button>
+                              <button
+                                onClick={() => { setDeleteUser(u); setOpenMenu(null); }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                               >
-                                Delete
-                              </Link>
+                                <Trash2 size={14} className="text-red-500" /> Delete
+                              </button>
                            </>
                          )}
                       </div>
@@ -366,6 +430,198 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+
+      {/* CREATE USER MODAL */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Create New User</h2>
+              <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 pt-0 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                <input
+                  type="text" value={formData.name}
+                  onChange={(e) => { setFormData(p => ({ ...p, name: e.target.value })); if(errors.name){setErrors(p=>{const n={...p};delete n.name;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, name: true})); validateField("name", formData.name, false);}}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.name && errors.name ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="e.g. John Doe"
+                />
+                {touched.name && errors.name && <p className={errorTextClass}>{errors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+                <input
+                  type="email" value={formData.email}
+                  onChange={(e) => { setFormData(p => ({ ...p, email: e.target.value })); if(errors.email){setErrors(p=>{const n={...p};delete n.email;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, email: true})); validateField("email", formData.email, false);}}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.email && errors.email ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="john.doe@example.com"
+                />
+                {touched.email && errors.email && <p className={errorTextClass}>{errors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"} value={formData.password}
+                    onChange={(e) => { setFormData(p => ({ ...p, password: e.target.value })); if(errors.password){setErrors(p=>{const n={...p};delete n.password;return n;})} }}
+                    onBlur={() => {setTouched(p => ({...p, password: true})); validateField("password", formData.password, false);}}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 pr-10 ${touched.password && errors.password ? inputErrorClass : "border-gray-200"}`}
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {touched.password && errors.password && <p className={errorTextClass}>{errors.password}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role</label>
+                <select
+                  value={formData.role} onChange={(e) => setFormData(p => ({ ...p, role: e.target.value }))}
+                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option>Institution Representative</option>
+                  <option>Admin</option>
+                  <option>Tutor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution</label>
+                <select
+                  value={formData.institution} onChange={(e) => setFormData(p => ({ ...p, institution: e.target.value }))}
+                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Search and select institution...</option>
+                  <option>Global Tech Institute</option>
+                  <option>LMS Portal Academy</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-6 pt-0">
+              <button onClick={() => setIsCreateModalOpen(false)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                Cancel
+              </button>
+              <button onClick={handleCreateSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT USER MODAL */}
+      {editUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Edit User</h2>
+              <button onClick={() => setEditUser(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 pt-0 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                <input
+                  type="text" value={formData.name}
+                  onChange={(e) => { setFormData(p => ({ ...p, name: e.target.value })); if(errors.name){setErrors(p=>{const n={...p};delete n.name;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, name: true})); validateField("name", formData.name, true);}}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.name && errors.name ? inputErrorClass : "border-gray-200"}`}
+                />
+                {touched.name && errors.name && <p className={errorTextClass}>{errors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+                <input
+                  type="email" value={formData.email}
+                  onChange={(e) => { setFormData(p => ({ ...p, email: e.target.value })); if(errors.email){setErrors(p=>{const n={...p};delete n.email;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, email: true})); validateField("email", formData.email, true);}}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.email && errors.email ? inputErrorClass : "border-gray-200"}`}
+                />
+                {touched.email && errors.email && <p className={errorTextClass}>{errors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"} value={formData.password}
+                    onChange={(e) => { setFormData(p => ({ ...p, password: e.target.value })); if(errors.password){setErrors(p=>{const n={...p};delete n.password;return n;})} }}
+                    onBlur={() => {setTouched(p => ({...p, password: true})); validateField("password", formData.password, true);}}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 pr-10 ${touched.password && errors.password ? inputErrorClass : "border-gray-200"}`}
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">Leave blank to keep current password</p>
+                {touched.password && errors.password && <p className={errorTextClass}>{errors.password}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role</label>
+                <select
+                  value={formData.role} onChange={(e) => setFormData(p => ({ ...p, role: e.target.value }))}
+                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option>Institution Representative</option>
+                  <option>Admin</option>
+                  <option>Tutor</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution</label>
+                <select
+                  value={formData.institution} onChange={(e) => setFormData(p => ({ ...p, institution: e.target.value }))}
+                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="">Search and select institution...</option>
+                  <option>Global Tech Institute</option>
+                  <option>LMS Portal Academy</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-6 pt-0">
+              <button onClick={() => setEditUser(null)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                Cancel
+              </button>
+              <button onClick={handleEditSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM DELETE MODAL */}
+      {deleteUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Confirm Delete</h2>
+              <button onClick={() => setDeleteUser(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 pt-0">
+              <p className="text-sm text-gray-600">Are you sure you want to delete user {deleteUser.name}?</p>
+            </div>
+            <div className="flex justify-center gap-3 p-6 pt-0">
+              <button onClick={() => setDeleteUser(null)} className="px-6 py-2 border border-gray-200 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleDeleteSubmit} className="px-6 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm transition-colors flex items-center gap-2">
+                <Trash2 size={16} /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
