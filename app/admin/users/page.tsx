@@ -41,6 +41,8 @@ export default function UsersPage() {
       else if (!isValidEmail(value)) error = "Invalid email format";
     }
     if (field === "password" && !isEdit && isEmpty(value)) error = "Password is required";
+    if (field === "role" && isEmpty(value)) error = "Role is required";
+    if (field === "institution" && isEmpty(value)) error = "Institution is required";
     
     setErrors(prev => {
       if (error) return { ...prev, [field]: error };
@@ -50,7 +52,7 @@ export default function UsersPage() {
   };
 
   const handleValidation = (isEdit = false) => {
-    const fields = ["name", "email", "password"];
+    const fields = ["name", "email", "password", "role", "institution"];
     const allTouched: Record<string, boolean> = {};
     let hasError = false;
     fields.forEach(f => {
@@ -443,7 +445,7 @@ export default function UsersPage() {
             </div>
             <div className="p-6 pt-0 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name <span className="text-red-500">*</span></label>
                 <input
                   type="text" value={formData.name}
                   onChange={(e) => { setFormData(p => ({ ...p, name: e.target.value })); if(errors.name){setErrors(p=>{const n={...p};delete n.name;return n;})} }}
@@ -454,7 +456,7 @@ export default function UsersPage() {
                 {touched.name && errors.name && <p className={errorTextClass}>{errors.name}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address <span className="text-red-500">*</span></label>
                 <input
                   type="email" value={formData.email}
                   onChange={(e) => { setFormData(p => ({ ...p, email: e.target.value })); if(errors.email){setErrors(p=>{const n={...p};delete n.email;return n;})} }}
@@ -465,7 +467,7 @@ export default function UsersPage() {
                 {touched.email && errors.email && <p className={errorTextClass}>{errors.email}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Password</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Password <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"} value={formData.password}
@@ -481,26 +483,33 @@ export default function UsersPage() {
                 {touched.password && errors.password && <p className={errorTextClass}>{errors.password}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role <span className="text-red-500">*</span></label>
                 <select
-                  value={formData.role} onChange={(e) => setFormData(p => ({ ...p, role: e.target.value }))}
-                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                  value={formData.role}
+                  onChange={(e) => { setFormData(p => ({ ...p, role: e.target.value })); if(errors.role){setErrors(p=>{const n={...p};delete n.role;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, role: true})); validateField("role", formData.role, false);}}
+                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.role && errors.role ? inputErrorClass : "border-gray-200"}`}
                 >
+                  <option value="">Select a role...</option>
                   <option>Institution Representative</option>
                   <option>Admin</option>
                   <option>Tutor</option>
                 </select>
+                {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
                 <select
-                  value={formData.institution} onChange={(e) => setFormData(p => ({ ...p, institution: e.target.value }))}
-                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                  value={formData.institution}
+                  onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, false);}}
+                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
                 >
                   <option value="">Search and select institution...</option>
                   <option>Global Tech Institute</option>
                   <option>LMS Portal Academy</option>
                 </select>
+                {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-3 p-6 pt-0">
@@ -527,7 +536,7 @@ export default function UsersPage() {
             </div>
             <div className="p-6 pt-0 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name <span className="text-red-500">*</span></label>
                 <input
                   type="text" value={formData.name}
                   onChange={(e) => { setFormData(p => ({ ...p, name: e.target.value })); if(errors.name){setErrors(p=>{const n={...p};delete n.name;return n;})} }}
@@ -537,7 +546,7 @@ export default function UsersPage() {
                 {touched.name && errors.name && <p className={errorTextClass}>{errors.name}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address <span className="text-red-500">*</span></label>
                 <input
                   type="email" value={formData.email}
                   onChange={(e) => { setFormData(p => ({ ...p, email: e.target.value })); if(errors.email){setErrors(p=>{const n={...p};delete n.email;return n;})} }}
@@ -564,26 +573,33 @@ export default function UsersPage() {
                 {touched.password && errors.password && <p className={errorTextClass}>{errors.password}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Role <span className="text-red-500">*</span></label>
                 <select
-                  value={formData.role} onChange={(e) => setFormData(p => ({ ...p, role: e.target.value }))}
-                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                  value={formData.role}
+                  onChange={(e) => { setFormData(p => ({ ...p, role: e.target.value })); if(errors.role){setErrors(p=>{const n={...p};delete n.role;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, role: true})); validateField("role", formData.role, true);}}
+                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.role && errors.role ? inputErrorClass : "border-gray-200"}`}
                 >
+                  <option value="">Select a role...</option>
                   <option>Institution Representative</option>
                   <option>Admin</option>
                   <option>Tutor</option>
                 </select>
+                {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
                 <select
-                  value={formData.institution} onChange={(e) => setFormData(p => ({ ...p, institution: e.target.value }))}
-                  className="w-full border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100"
+                  value={formData.institution}
+                  onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
+                  onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, true);}}
+                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
                 >
                   <option value="">Search and select institution...</option>
                   <option>Global Tech Institute</option>
                   <option>LMS Portal Academy</option>
                 </select>
+                {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-3 p-6 pt-0">
