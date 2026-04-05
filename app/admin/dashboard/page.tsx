@@ -15,7 +15,7 @@ import Link from "next/link"
 
 export default function DashboardPage() {
   return (
-    <div>
+    <div className="p-8">
 
       {/* Header */}
 

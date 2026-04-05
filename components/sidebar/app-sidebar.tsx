@@ -5,7 +5,7 @@ import NavUser from "./nav-user";
 
 export default function AppSidebar() {
   return (
-    <aside className="w-64 bg-[#1B2533] text-white flex flex-col justify-between h-screen shadow-xl">
+    <aside className="w-64 shrink-0 bg-[#1B2533] text-white flex flex-col justify-between h-screen shadow-xl">
       <div>
         <div className="p-6">
           <div className="flex items-center gap-3">
