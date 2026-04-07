@@ -22,9 +22,15 @@ export default function LoginPage() {
 
     // Role-based mock routing
     if (email.toLowerCase().includes("admin")) {
-      router.push("/admin/dashboard");
+      document.cookie = "mock_auth_role=admin; path=/;";
+      // Add a tiny delay to ensure the cookie is set before the app router pushes
+      setTimeout(() => {
+        router.push("/admin/dashboard");
+      }, 100);
     } else {
       alert("Access Denied: Unrecognized role or invalid credentials.");
+      // Still set a student cookie if you want to test further, but right now we only care about admin
+      document.cookie = "mock_auth_role=student; path=/;";
       setIsLoading(false);
     }
   };
