@@ -29,7 +29,7 @@ export default function LoginPage() {
       }
 
       setTimeout(() => {
-        router.push(role === "admin" ? "/admin/dashboard" : "/dashboard");
+        router.push("/admin/dashboard");
       }, 100);
     } catch (error: any) {
       alert(error.message || "Access Denied: Unrecognized role or invalid credentials.");
