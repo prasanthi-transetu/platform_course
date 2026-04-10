@@ -32,6 +32,7 @@ export default function LoginPage() {
         router.push("/admin/dashboard");
       }, 100);
     } catch (error: any) {
+      console.error("Login Error:", error);
       alert(error.message || "Access Denied: Unrecognized role or invalid credentials.");
       setIsLoading(false);
     }
