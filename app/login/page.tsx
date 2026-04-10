@@ -21,14 +21,22 @@ export default function LoginPage() {
     try {
       const data = await loginToApi(email, password);
       
-      const role = data?.role || (email.toLowerCase().includes("admin") ? "admin" : "student");
+      // Normalize role and add admin fallback for the user's email
+      const rawRole = data?.role || (
+        email.toLowerCase().includes("admin") || 
+        email.toLowerCase() === "prasanthitransetu@gmail.com" ? "admin" : "student"
+      );
+      const role = rawRole.toLowerCase();
+      
       document.cookie = `mock_auth_role=${role}; path=/;`;
       
       if (data?.token) {
         document.cookie = `token=${data.token}; path=/;`;
       }
 
+      // Small delay for cookie propagation and reset loading state
       setTimeout(() => {
+        setIsLoading(false);
         router.push("/admin/dashboard");
       }, 100);
     } catch (error: any) {

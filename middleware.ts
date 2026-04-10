@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
     const authCookie = request.cookies.get('mock_auth_role');
     
     // If no cookie is present or role is not admin, redirect to login
-    if (!authCookie || authCookie.value !== 'admin') {
+    if (!authCookie || authCookie.value.toLowerCase() !== 'admin') {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }
