@@ -5,6 +5,7 @@ import AuthLayout from "@/components/layouts/AuthLayout";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { loginToApi } from "@/features/login/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,20 +18,21 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const data = await loginToApi(email, password);
+      
+      const role = data?.role || (email.toLowerCase().includes("admin") ? "admin" : "student");
+      document.cookie = `mock_auth_role=${role}; path=/;`;
+      
+      if (data?.token) {
+        document.cookie = `token=${data.token}; path=/;`;
+      }
 
-    // Role-based mock routing
-    if (email.toLowerCase().includes("admin")) {
-      document.cookie = "mock_auth_role=admin; path=/;";
-      // Add a tiny delay to ensure the cookie is set before the app router pushes
       setTimeout(() => {
-        router.push("/admin/dashboard");
+        router.push(role === "admin" ? "/admin/dashboard" : "/dashboard");
       }, 100);
-    } else {
-      alert("Access Denied: Unrecognized role or invalid credentials.");
-      // Still set a student cookie if you want to test further, but right now we only care about admin
-      document.cookie = "mock_auth_role=student; path=/;";
+    } catch (error: any) {
+      alert(error.message || "Access Denied: Unrecognized role or invalid credentials.");
       setIsLoading(false);
     }
   };
