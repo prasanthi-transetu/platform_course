@@ -106,7 +106,7 @@ export default function AssignmentsPage() {
   );
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Section */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Assignments</h1>

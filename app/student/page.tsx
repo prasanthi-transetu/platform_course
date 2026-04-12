@@ -59,7 +59,7 @@ const activityData = [
 
 export default function StudentDashboard() {
   return (
-    <div className="p-8 space-y-8 animate-in fade-in duration-500">
+    <div className="p-6 space-y-6 animate-in fade-in duration-500">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Student Dashboard Overview</h1>

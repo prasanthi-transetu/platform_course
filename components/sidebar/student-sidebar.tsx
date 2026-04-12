@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const sidebarLinks = [
-  { label: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/student", icon: LayoutDashboard },
   { label: "Courses", href: "/student/courses", icon: BookOpen },
   { label: "Assignments", href: "/student/assignments", icon: FileText },
   { label: "Attendance", href: "/student/attendance", icon: CalendarCheck },
@@ -30,7 +30,7 @@ export default function StudentSidebar() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === "/student/dashboard" && pathname === "/student") return true;
+    if (href === "/student") return pathname === "/student";
     return pathname === href || pathname.startsWith(href + "/");
   };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { 
   Search, 
@@ -101,7 +102,7 @@ export default function CoursesPage() {
   );
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -155,9 +156,10 @@ export default function CoursesPage() {
         view === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredCourses.map((course) => (
-              <div key={course.id} className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden flex flex-col">
-                {/* Course Header Image/Pattern */}
-                <div className={cn(
+              <Link key={course.id} href={`/student/courses/${course.id}`} className="block group">
+                <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl transition-all overflow-hidden h-full flex flex-col">
+                  {/* Course Header Image/Pattern */}
+                  <div className={cn(
                   "h-48 relative overflow-hidden flex items-center justify-center",
                   course.color === "blue" ? "bg-blue-50" :
                   course.color === "indigo" ? "bg-indigo-50" :
@@ -248,7 +250,8 @@ export default function CoursesPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+                </div>
+              </Link>
             ))}
           </div>
         ) : (
@@ -267,7 +270,11 @@ export default function CoursesPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredCourses.map((course) => (
-                    <tr key={course.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <tr 
+                      key={course.id} 
+                      className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                      onClick={() => window.location.href = `/student/courses/${course.id}`}
+                    >
                       <td className="px-8 py-5">
                         <span className="px-3 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-lg border border-gray-200">
                           {course.id}
