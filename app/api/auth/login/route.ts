@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Local authentication using environment variables
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@lms.com";
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const adminEmail = process.env.ADMIN_EMAIL || "prasanthitransetu@gmail.com";
+    const adminPassword = process.env.ADMIN_PASSWORD || "Pressi@2316";
 
     if (email === adminEmail && password === adminPassword) {
       return NextResponse.json({
