@@ -12,91 +12,37 @@ import {
 
 import Link from "next/link"
 
+import { fetchInstitutions, Institution } from "@/features/institutions/api"
+
 export default function InstitutionsPage() {
 
-  const [institutions, setInstitutions] = useState<any[]>([])
+  const [institutions, setInstitutions] = useState<Institution[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [openContacts, setOpenContacts] = useState<number | null>(null)
 
-  const defaultInstitutions = [
-
-    {
-      id: "INST-2024-001",
-      name: "Oxford Technical Institute",
-      email: "admin@oxford.edu",
-      location: "London, UK",
-      status: "Active",
-      contacts: [
-        { name: "Arthur Pendragon", email: "arthur@oxford.edu", phone: "+44 20 7946 0958" },
-        { name: "Merlin Ambrosius", email: "merlin@oxford.edu", phone: "+44 20 7946 1234" }
-      ]
-    },
-
-    {
-      id: "INST-2024-002",
-      name: "Stanford Research Hub",
-      email: "m.chen@stanford.edu",
-      location: "California, USA",
-      status: "Active",
-      contacts: [
-        { name: "Ming Chen", email: "m.chen@stanford.edu", phone: "+1 650 555 0198" }
-      ]
-    },
-
-    {
-      id: "INST-2024-003",
-      name: "Melbourne IT School",
-      email: "s.jenkins@melit.edu.au",
-      location: "Melbourne, AU",
-      status: "Inactive",
-      contacts: []
-    },
-
-    {
-      id: "INST-2024-004",
-      name: "Tokyo Advanced Tech",
-      email: "h.tanaka@tokyotech.jp",
-      location: "Tokyo, JP",
-      status: "Active",
-      contacts: [
-        { name: "Hiro Tanaka", email: "h.tanaka@tokyotech.jp", phone: "+81 3 1234 5678" },
-        { name: "Kenji Sato", email: "k.sato@tokyotech.jp", phone: "+81 3 9876 5432" }
-      ]
-    },
-
-    {
-      id: "INST-2024-005",
-      name: "New Era Academy",
-      email: "contact@newera.edu",
-      location: "Toronto, CA",
-      status: "Active",
-      contacts: [
-        { name: "Sarah Connor", email: "sarah.c@newera.edu", phone: "+1 416 555 0147" }
-      ]
-    },
-
-  ]
-
   useEffect(() => {
-
-    const stored =
-      JSON.parse(localStorage.getItem("institutions") || "[]")
-
-    if (stored.length === 0) {
-
-      localStorage.setItem(
-        "institutions",
-        JSON.stringify(defaultInstitutions)
-      )
-
-      setInstitutions(defaultInstitutions)
-
-    } else {
-
-      setInstitutions(stored)
-
+    const loadInstitutions = async () => {
+      try {
+        setIsLoading(true)
+        const data = await fetchInstitutions()
+        setInstitutions(data)
+      } catch (err: any) {
+        console.error("Failed to load institutions:", err)
+        setError(err.message || "Failed to load institutions")
+        
+        // Fallback to localStorage if API fails (for local testing without backend)
+        const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
+        if (stored.length > 0) {
+          setInstitutions(stored)
+        }
+      } finally {
+        setIsLoading(false)
+      }
     }
 
+    loadInstitutions()
   }, [])
 
   return (
@@ -259,8 +205,26 @@ export default function InstitutionsPage() {
           </thead>
 
           <tbody>
-
-            {institutions.map((inst, index) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-gray-500 italic">
+                  Loading institutions...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-red-500">
+                  {error}. Using cached data if available.
+                </td>
+              </tr>
+            ) : institutions.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-gray-500">
+                  No institutions found.
+                </td>
+              </tr>
+            ) : (
+              institutions.map((inst, index) => (
 
               <tr
                 key={index}
@@ -376,9 +340,7 @@ export default function InstitutionsPage() {
                 </td>
 
               </tr>
-
-            ))}
-
+            )))}
           </tbody>
 
         </table>

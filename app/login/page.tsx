@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import AuthLayout from "@/components/layouts/AuthLayout";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { loginToApi } from "@/features/login/api";
 
 export default function LoginPage() {
-  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,11 +34,9 @@ export default function LoginPage() {
         document.cookie = `token=${data.token}; path=/;`;
       }
 
-      // Small delay for cookie propagation and reset loading state
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push("/admin/dashboard");
-      }, 100);
+      // Use full page navigation so the server-side middleware
+      // picks up the newly set cookie on the next request.
+      window.location.href = "/admin/dashboard";
     } catch (error: any) {
       console.error("Login Error:", error);
       alert(error.message || "Access Denied: Unrecognized role or invalid credentials.");

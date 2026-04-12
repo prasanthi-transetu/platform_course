@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Plus, Trash2 } from "lucide-react"
+import { createInstitution } from "@/features/institutions/api"
 import { isEmpty, isValidEmail, hasMinLength, isValidPhone, inputErrorClass, errorTextClass } from "@/lib/validation"
 
 export default function AddInstitutionPage() {
@@ -122,7 +123,9 @@ export default function AddInstitutionPage() {
     return !hasError && contactsValid
   }
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false)
+  
+  const handleSubmit = async () => {
     setFormError("")
 
     if (!validateAll()) {
@@ -130,24 +133,38 @@ export default function AddInstitutionPage() {
       return
     }
 
-    const newInstitution = {
-      id:`INST-${Date.now()}`,
-      name,
-      email,
-      location,
-      status:"Active",
-      contacts
+    try {
+      setSubmitting(true)
+      
+      const payload = {
+        name,
+        email,
+        location,
+        status: "Active",
+        contacts: contacts.map(c => ({
+          name: c.name,
+          role: c.role,
+          email: c.email,
+          phone: c.phone
+        }))
+      }
+
+      await createInstitution(payload)
+      
+      // Update local storage as a cache fallback if necessary
+      const existing = JSON.parse(localStorage.getItem("institutions") || "[]")
+      localStorage.setItem(
+        "institutions",
+        JSON.stringify([{ ...payload, id: `INST-${Date.now()}` }, ...existing])
+      )
+
+      router.push("/admin/institutions")
+    } catch (err: any) {
+      console.error("Failed to create institution:", err)
+      setFormError(err.message || "Failed to create institution. Please check your connection.")
+    } finally {
+      setSubmitting(false)
     }
-
-    const existing =
-      JSON.parse(localStorage.getItem("institutions") || "[]")
-
-    localStorage.setItem(
-      "institutions",
-      JSON.stringify([newInstitution,...existing])
-    )
-
-    router.push("/admin/institutions")
   }
 
   const getInputClass = (field: string) => {
@@ -365,9 +382,10 @@ export default function AddInstitutionPage() {
 
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+            disabled={submitting}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Register Institution
+            {submitting ? "Registering..." : "Register Institution"}
           </button>
 
         </div>

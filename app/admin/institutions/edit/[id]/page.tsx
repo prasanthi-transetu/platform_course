@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { Plus, Trash2 } from "lucide-react"
+import { fetchInstitutionById, updateInstitution } from "@/features/institutions/api"
 import { isEmpty, isValidEmail, isValidPhone, inputErrorClass, errorTextClass } from "@/lib/validation"
 
 export default function EditInstitutionPage() {
@@ -19,23 +20,44 @@ export default function EditInstitutionPage() {
     {name:"",role:"",email:"",phone:""}
   ])
 
-  useEffect(()=>{
+  const [isLoading, setIsLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    const stored =
-      JSON.parse(localStorage.getItem("institutions") || "[]")
+  useEffect(() => {
+    const loadInstitution = async () => {
+      if (!params?.id) return
 
-    const inst = stored.find(
-      (i:any)=> i.id === params.id
-    )
+      try {
+        setIsLoading(true)
+        const inst = await fetchInstitutionById(params.id as string)
 
-    if(inst){
-      setName(inst.name)
-      setEmail(inst.email)
-      setLocation(inst.location)
-      if (inst.contacts?.length > 0) setContacts(inst.contacts)
+        if (inst) {
+          setName(inst.name)
+          setEmail(inst.email)
+          setLocation(inst.location)
+          if (inst.contacts?.length > 0) setContacts(inst.contacts)
+        }
+      } catch (err: any) {
+        console.error("Failed to load institution:", err)
+        setError(err.message || "Failed to load institution")
+        
+        // Fallback to localStorage for compatibility
+        const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
+        const inst = stored.find((i: any) => i.id === params.id)
+        if (inst) {
+          setName(inst.name)
+          setEmail(inst.email)
+          setLocation(inst.location)
+          if (inst.contacts?.length > 0) setContacts(inst.contacts)
+        }
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-  },[params.id])
+    loadInstitution()
+  }, [params?.id])
 
   const addContact = () => {
 
@@ -137,18 +159,44 @@ export default function EditInstitutionPage() {
     )
   }
 
-  const handleUpdate=()=>{
+  const handleUpdate = async () => {
     if (!validateAll()) return
 
-    const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
-    const updated = stored.map((inst:any)=>{
-      if(inst.id === params.id){
-        return { ...inst, name, email, location, contacts }
+    try {
+      setSubmitting(true)
+      setError(null)
+      
+      const payload = {
+        name,
+        email,
+        location,
+        contacts: contacts.map(c => ({
+          name: c.name,
+          role: c.role,
+          email: c.email,
+          phone: c.phone
+        }))
       }
-      return inst
-    })
-    localStorage.setItem("institutions", JSON.stringify(updated))
-    router.push("/admin/institutions")
+
+      await updateInstitution(params.id as string, payload)
+
+      // Sync local storage as fallback
+      const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
+      const updated = stored.map((inst: any) => {
+        if (inst.id === params.id) {
+          return { ...inst, ...payload }
+        }
+        return inst
+      })
+      localStorage.setItem("institutions", JSON.stringify(updated))
+      
+      router.push("/admin/institutions")
+    } catch (err: any) {
+      console.error("Failed to update institution:", err)
+      setError(err.message || "Failed to update institution")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -174,197 +222,213 @@ export default function EditInstitutionPage() {
 
         </div>
 
-        {/* Institution Info */}
-
-        <div className="space-y-4">
-
-          <div>
-
-            <label className="text-xs text-gray-600">
-              Institution Name <span className="text-red-400">*</span>
-            </label>
-
-            <input
-              value={name}
-              onChange={(e)=>setName(e.target.value)}
-              onBlur={() => handleFieldBlur("name", name)}
-              className={getInputClass("name")}
-            />
-            <ErrorMsg field="name" />
-
+        {isLoading ? (
+          <div className="py-20 text-center text-gray-500 italic">
+            Loading institution details...
           </div>
+        ) : (
+          <>
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 border border-red-100 flex items-center gap-2">
+                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                 {error}
+              </div>
+            )}
+            
+            {/* Institution Info */}
 
-          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
 
-            <div>
+              <div>
 
-              <label className="text-xs text-gray-600">
-                Official Email <span className="text-red-400">*</span>
-              </label>
+                <label className="text-xs text-gray-600">
+                  Institution Name <span className="text-red-400">*</span>
+                </label>
 
-              <input
-                value={email}
-                onChange={(e)=>setEmail(e.target.value)}
-                onBlur={() => handleFieldBlur("email", email)}
-                className={getInputClass("email")}
-              />
-              <ErrorMsg field="email" />
+                <input
+                  value={name}
+                  onChange={(e)=>setName(e.target.value)}
+                  onBlur={() => handleFieldBlur("name", name)}
+                  className={getInputClass("name")}
+                />
+                <ErrorMsg field="name" />
+
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                <div>
+
+                  <label className="text-xs text-gray-600">
+                    Official Email <span className="text-red-400">*</span>
+                  </label>
+
+                  <input
+                    value={email}
+                    onChange={(e)=>setEmail(e.target.value)}
+                    onBlur={() => handleFieldBlur("email", email)}
+                    className={getInputClass("email")}
+                  />
+                  <ErrorMsg field="email" />
+
+                </div>
+
+                <div>
+
+                  <label className="text-xs text-gray-600">
+                    Location <span className="text-red-400">*</span>
+                  </label>
+
+                  <input
+                    value={location}
+                    onChange={(e)=>setLocation(e.target.value)}
+                    onBlur={() => handleFieldBlur("location", location)}
+                    className={getInputClass("location")}
+                  />
+                  <ErrorMsg field="location" />
+
+                </div>
+
+              </div>
 
             </div>
 
-            <div>
+            {/* Contacts */}
 
-              <label className="text-xs text-gray-600">
-                Location <span className="text-red-400">*</span>
-              </label>
+            <div className="mt-6">
 
-              <input
-                value={location}
-                onChange={(e)=>setLocation(e.target.value)}
-                onBlur={() => handleFieldBlur("location", location)}
-                className={getInputClass("location")}
-              />
-              <ErrorMsg field="location" />
+              <div className="flex justify-between items-center mb-3">
 
-            </div>
+                <h3 className="text-sm font-medium text-gray-900">
+                  Point of Contacts
+                </h3>
 
-          </div>
+                <button
+                  onClick={addContact}
+                  className="flex items-center gap-1 text-blue-600 text-sm"
+                >
+                  <Plus size={16}/>
+                  Add
+                </button>
 
-        </div>
+              </div>
 
-        {/* Contacts */}
+              {contacts.map((contact,index)=>(
 
-        <div className="mt-6">
+                <div
+                  key={index}
+                  className="border rounded-lg p-4 mb-4 space-y-3"
+                >
 
-          <div className="flex justify-between items-center mb-3">
+                  <div className="flex justify-between">
 
-            <h3 className="text-sm font-medium text-gray-900">
-              Point of Contacts
-            </h3>
+                    <span className="text-xs text-gray-600">
+                      Contact {index+1}
+                    </span>
 
-            <button
-              onClick={addContact}
-              className="flex items-center gap-1 text-blue-600 text-sm"
-            >
-              <Plus size={16}/>
-              Add
-            </button>
+                    {contacts.length>1 &&(
 
-          </div>
+                      <button
+                        onClick={()=>removeContact(index)}
+                      >
+                        <Trash2
+                          size={16}
+                          className="text-red-500"
+                        />
+                      </button>
 
-          {contacts.map((contact,index)=>(
+                    )}
 
-            <div
-              key={index}
-              className="border rounded-lg p-4 mb-4 space-y-3"
-            >
+                  </div>
 
-              <div className="flex justify-between">
+                  <div className="grid grid-cols-2 gap-4">
 
-                <span className="text-xs text-gray-600">
-                  Contact {index+1}
-                </span>
-
-                {contacts.length>1 &&(
-
-                  <button
-                    onClick={()=>removeContact(index)}
-                  >
-                    <Trash2
-                      size={16}
-                      className="text-red-500"
+                    <input
+                      placeholder="Name"
+                      className="border rounded-lg px-3 py-2 text-gray-900"
+                      value={contact.name}
+                      onChange={(e)=>
+                        handleChange(
+                          index,
+                          "name",
+                          e.target.value
+                        )
+                      }
                     />
-                  </button>
 
-                )}
+                    <input
+                      placeholder="Role"
+                      className="border rounded-lg px-3 py-2 text-gray-900"
+                      value={contact.role}
+                      onChange={(e)=>
+                        handleChange(
+                          index,
+                          "role",
+                          e.target.value
+                        )
+                      }
+                    />
 
-              </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
 
-                <input
-                  placeholder="Name"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.name}
-                  onChange={(e)=>
-                    handleChange(
-                      index,
-                      "name",
-                      e.target.value
-                    )
-                  }
-                />
+                    <input
+                      placeholder="Email"
+                      className="border rounded-lg px-3 py-2 text-gray-900"
+                      value={contact.email}
+                      onChange={(e)=>
+                        handleChange(
+                          index,
+                          "email",
+                          e.target.value
+                        )
+                      }
+                    />
 
-                <input
-                  placeholder="Role"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.role}
-                  onChange={(e)=>
-                    handleChange(
-                      index,
-                      "role",
-                      e.target.value
-                    )
-                  }
-                />
+                    <input
+                      placeholder="Phone"
+                      className="border rounded-lg px-3 py-2 text-gray-900"
+                      value={contact.phone}
+                      onChange={(e)=>
+                        handleChange(
+                          index,
+                          "phone",
+                          e.target.value
+                        )
+                      }
+                    />
 
-              </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                </div>
 
-                <input
-                  placeholder="Email"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.email}
-                  onChange={(e)=>
-                    handleChange(
-                      index,
-                      "email",
-                      e.target.value
-                    )
-                  }
-                />
-
-                <input
-                  placeholder="Phone"
-                  className="border rounded-lg px-3 py-2 text-gray-900"
-                  value={contact.phone}
-                  onChange={(e)=>
-                    handleChange(
-                      index,
-                      "phone",
-                      e.target.value
-                    )
-                  }
-                />
-
-              </div>
+              ))}
 
             </div>
 
-          ))}
+            {/* Footer */}
 
-        </div>
+            <div className="flex justify-end gap-4 mt-6">
 
-        {/* Footer */}
+              <Link
+                href="/admin/institutions"
+                className="text-gray-600 flex items-center"
+              >
+                Cancel
+              </Link>
 
-        <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={handleUpdate}
+                disabled={submitting}
+                className="bg-blue-600 text-white px-5 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "Updating..." : "Update Institution"}
+              </button>
 
-          <Link
-            href="/admin/institutions"
-            className="text-gray-600"
-          >
-            Cancel
-          </Link>
-
-          <button
-            onClick={handleUpdate}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-          >
-            Update Institution
-          </button>
-
-        </div>
+            </div>
+          </>
+        )}
 
       </div>
 

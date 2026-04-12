@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { fetchInstitutionById, deleteInstitution } from "@/features/institutions/api";
 
 export default function DeleteInstitutionPage() {
 
@@ -12,18 +13,32 @@ export default function DeleteInstitutionPage() {
   const [institution, setInstitution] = useState<any>(null);
   const [checked, setChecked] = useState(false);
   const [hasActiveBatches, setHasActiveBatches] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadInstitution = async () => {
+      if (!params?.id) return;
+      
+      try {
+        setIsLoading(true);
+        const inst = await fetchInstitutionById(params.id as string);
+        setInstitution(inst);
+      } catch (err: any) {
+        console.error("Failed to load institution:", err);
+        setError(err.message || "Failed to load institution");
+        
+        // Fallback to localStorage
+        const storedInstitutions = JSON.parse(localStorage.getItem("institutions") || "[]");
+        const inst = storedInstitutions.find((i: any) => i.id === params?.id);
+        setInstitution(inst);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    const storedInstitutions =
-      JSON.parse(localStorage.getItem("institutions") || "[]");
-
-    const inst = storedInstitutions.find(
-      (i: any) => i.id === params?.id
-    );
-
-    setInstitution(inst);
-
+    loadInstitution();
   }, [params]);
 
 
@@ -45,93 +60,114 @@ export default function DeleteInstitutionPage() {
   };
 
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!params?.id) return;
 
-    const storedInstitutions =
-      JSON.parse(localStorage.getItem("institutions") || "[]");
+    try {
+      setIsDeleting(true);
+      setError(null);
+      await deleteInstitution(params.id as string);
 
-    const updatedInstitutions = storedInstitutions.filter(
-      (i: any) => i.id !== params?.id
-    );
+      // Success - sync local storage fallback
+      const storedInstitutions = JSON.parse(localStorage.getItem("institutions") || "[]");
+      const updatedInstitutions = storedInstitutions.filter((i: any) => i.id !== params?.id);
+      localStorage.setItem("institutions", JSON.stringify(updatedInstitutions));
 
-    localStorage.setItem(
-      "institutions",
-      JSON.stringify(updatedInstitutions)
-    );
-
-    router.push("/admin/institutions");
-
+      router.push("/admin/institutions");
+    } catch (err: any) {
+      console.error("Failed to delete institution:", err);
+      setError(err.message || "Failed to delete institution. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-
-  if (!institution) {
+  if (isLoading) {
     return (
-      <div className="p-10 text-center text-gray-800">
-        Institution not found
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="bg-white p-10 rounded-xl shadow-lg text-center text-gray-500 italic">
+          Loading institution details...
+        </div>
+      </div>
+    );
+  }
+
+  if (!institution && !error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="bg-white p-10 rounded-xl shadow-lg text-center text-gray-800">
+           Institution not found
+           <div className="mt-4">
+             <Link href="/admin/institutions" className="text-blue-600 hover:underline">Back to Institutions</Link>
+           </div>
+        </div>
       </div>
     );
   }
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
 
-      <div className="bg-white p-6 rounded-xl shadow-lg w-[450px]">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
 
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Delete Institution
         </h2>
 
-        <p className="text-sm text-gray-700 mb-4">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 border border-red-100">
+             {error}
+          </div>
+        )}
+
+        <p className="text-sm text-gray-700 mb-4 leading-relaxed">
           You are about to delete
-          <span className="font-semibold">
-            {" "} {institution.name}
-          </span>
+          <span className="font-semibold text-gray-900">
+            {" "} {institution?.name || "this institution"}
+          </span>. This action cannot be undone.
         </p>
 
-        <div className="flex items-center gap-2 mb-4">
-          <input
-            type="checkbox"
-            onChange={handleCheck}
-            className="w-4 h-4"
-          />
-          <span className="text-sm text-gray-700">
-            Check if institution has active batches
-          </span>
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="flex items-start gap-3">
+              <input
+                id="batch-check"
+                type="checkbox"
+                onChange={handleCheck}
+                className="mt-1 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+              />
+              <label htmlFor="batch-check" className="text-sm text-gray-700 font-medium cursor-pointer">
+                Confirm: I have checked that there are no active batches for this institution.
+              </label>
+            </div>
         </div>
 
         {checked && hasActiveBatches && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
-            Deletion is not possible because this institution has
-            active batches. Remove those batches first.
+          <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm flex items-center gap-2 border border-red-200">
+             <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+             Deletion blocked: Active batches detected.
           </div>
         )}
 
-        {checked && !hasActiveBatches && (
-          <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">
-            No active batches found. You can delete this institution.
-          </div>
-        )}
-
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3 pt-2">
 
           <Link
             href="/admin/institutions"
-            className="text-gray-600"
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
           >
             Cancel
           </Link>
 
           <button
             onClick={handleDelete}
-            disabled={!checked || hasActiveBatches}
-            className={`px-4 py-2 rounded text-white ${
-              !checked || hasActiveBatches
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700"
+            disabled={!checked || hasActiveBatches || isDeleting}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all ${
+              !checked || hasActiveBatches || isDeleting
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-red-600 hover:bg-red-700 shadow-md shadow-red-100"
             }`}
           >
-            Delete Institution
+            {isDeleting ? "Deleting..." : "Delete Institution"}
           </button>
 
         </div>
@@ -140,4 +176,4 @@ export default function DeleteInstitutionPage() {
 
     </div>
   );
-}
+}
