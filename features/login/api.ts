@@ -1,4 +1,4 @@
-export const loginBaseUrl = process.env.NEXT_PUBLIC_LOGIN_API_URL || "http://localhost:8000/auth/login";
+export const loginBaseUrl = "/api/auth/login";
 
 export const loginToApi = async (email: string, password: string) => {
   const response = await fetch(loginBaseUrl, {
