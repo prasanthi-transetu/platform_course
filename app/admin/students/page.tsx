@@ -63,10 +63,6 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex gap-3">
-          <Link href="/admin/students/bulk-upload" className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg text-gray-800 bg-white hover:bg-gray-100">
-            <Upload size={16} />
-            Bulk Upload
-          </Link>
           <Link href="/admin/students/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
             + Add Student
           </Link>

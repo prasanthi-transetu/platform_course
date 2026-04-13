@@ -291,71 +291,8 @@ export default function CreateBatchPage() {
           </div>
 
 
-          {/* FILE UPLOAD */}
-
-          <div>
-
-            <label className="text-sm text-gray-600 font-medium">
-              Bulk Upload
-            </label>
-
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              className="border-2 border-dashed rounded-xl mt-2 p-10 flex flex-col items-center justify-center text-center"
-            >
-
-              <UploadCloud size={36} className="text-blue-600 mb-2"/>
-
-              <p className="text-gray-700">
-                Drag and drop CSV file here
-              </p>
-
-              <p className="text-gray-400 text-sm mb-3">
-                Maximum file size 10MB
-              </p>
-
-              {/* FILE INPUT */}
-
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-                id="fileUpload"
-              />
-
-              <label
-                htmlFor="fileUpload"
-                className="border px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                Select File
-              </label>
-
-              {file && (
-                <p className="mt-3 text-sm text-green-600">
-                  Selected: {file.name}
-                </p>
-              )}
-
-            </div>
-
-          </div>
 
 
-          {/* TEMPLATE DOWNLOAD */}
-
-          <div className="flex justify-between text-sm text-gray-600">
-
-            <span>
-              Make sure your file follows the standard template format.
-            </span>
-
-            <button className="text-blue-600 hover:underline">
-              Download Template
-            </button>
-
-          </div>
 
           {/* FORM ERROR */}
           {formError && (
