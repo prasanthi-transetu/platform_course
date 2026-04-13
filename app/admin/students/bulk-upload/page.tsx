@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, Download, X } from "lucide-react"
+import { createStudent } from "@/features/students/api"
 
 export default function BulkUploadPage() {
 
@@ -132,18 +133,10 @@ STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
       for (let i = 0; i < studentsPreview.length; i++) {
         const student = studentsPreview[i]
         try {
-          const response = await fetch("/api/v1/students", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(student),
-          })
-
-          if (response.ok) {
-            successCount++
-          } else {
-            failCount++
-          }
+          await createStudent(student)
+          successCount++
         } catch (err) {
+          console.error(`Failed to upload student ${student.email}:`, err)
           failCount++
         }
         setUploadProgress(prev => ({ ...prev, current: i + 1 }))

@@ -1,5 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { X } from "lucide-react"
+import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation"
 import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api"
 
 export default function EditStudentPage() {

@@ -16,11 +16,28 @@ export interface Student {
 /**
  * Mapping helper: Splits a full name into first and last name
  */
-function splitName(fullName: string) {
+export function splitName(fullName: string) {
+  if (!fullName) return { first_name: "", last_name: "" };
   const parts = fullName.trim().split(/\s+/);
   const first_name = parts[0] || "";
   const last_name = parts.slice(1).join(" ") || "";
   return { first_name, last_name };
+}
+
+/**
+ * Mapping helper: Normalizes student data from backend to frontend format
+ */
+function mapStudent(s: any): Student {
+  const { first_name, last_name } = splitName(s.student_name || "");
+  
+  return {
+    ...s,
+    id: s.student_id || s.id,
+    first_name: s.first_name || first_name,
+    last_name: s.last_name || last_name,
+    name: s.student_name || s.name || (s.first_name ? `${s.first_name} ${s.last_name || ""}`.trim() : ""),
+    status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()) : "Active",
+  };
 }
 
 /**
@@ -33,7 +50,8 @@ export async function fetchStudents() {
     throw new Error(err.message || "Failed to fetch students");
   }
   const result = await response.json();
-  return result.data || result; // Backend returns { data: [...] }
+  const students = result.data || result; // Backend returns { data: [...] }
+  return Array.isArray(students) ? students.map(mapStudent) : [];
 }
 
 /**
@@ -46,7 +64,8 @@ export async function fetchStudent(id: string | number) {
     throw new Error(err.message || "Failed to fetch student details");
   }
   const result = await response.json();
-  return result.data || result;
+  const student = result.data || result;
+  return mapStudent(student);
 }
 export async function createStudent(data: any) {
   // STRICT mapping to match backend developer's successful test case

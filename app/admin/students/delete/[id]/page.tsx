@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { fetchStudent, deleteStudent } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
