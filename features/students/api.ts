@@ -64,8 +64,8 @@ export async function fetchStudents(page: number = 1, limit: number = 50) {
     const mapped = Array.isArray(students) ? students.map(mapStudent) : [];
 
     // Optional pagination metadata
-    const total = result.total || result.data?.total || result.total_count || mapped.length;
-    const totalPages = result.total_pages || result.data?.total_pages || Math.ceil(total / limit);
+    const total = result.pagination?.total || result.total || result.data?.total || result.total_count || mapped.length;
+    const totalPages = result.pagination?.totalPages || result.pagination?.total_pages || result.total_pages || result.data?.total_pages || Math.ceil(total / limit);
 
     // Merge with any locally-stored students (created while backend was down)
     const local = getLocalStudents();
