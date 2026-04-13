@@ -21,22 +21,35 @@ export default function EditStudentPage() {
     status: "Active"
   })
 
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   /* LOAD STUDENT DATA */
 
   useEffect(() => {
-
-    const storedStudents =
-      JSON.parse(localStorage.getItem("students") || "[]")
-
-    const found =
-      storedStudents.find((s:any)=>s.id === studentId)
-
-    if (found) {
-
-      setStudent(found)
-
+    const fetchStudent = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await fetch(`/api/v1/students/${studentId}`)
+        if (!response.ok) {
+          if (response.status === 404) throw new Error("Student not found")
+          throw new Error("Failed to fetch student details")
+        }
+        const data = await response.json()
+        setStudent(data)
+      } catch (err: any) {
+        console.error("Error fetching student:", err)
+        setError(err.message || "Failed to load student data")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
+    if (studentId) {
+      fetchStudent()
+    }
   }, [studentId])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -111,17 +124,30 @@ export default function EditStudentPage() {
 
   /* UPDATE STUDENT */
 
-  const updateStudent = () => {
+  const updateStudent = async () => {
     if (!validateAll()) return
 
-    const storedStudents = JSON.parse(localStorage.getItem("students") || "[]")
-    const updatedStudents = storedStudents.map((s:any)=>{
-      if (s.id === studentId) return student
-      return s
-    })
-    localStorage.setItem("students", JSON.stringify(updatedStudents))
-    alert("Student updated successfully!")
-    router.push("/admin/students")
+    try {
+      setIsUpdating(true)
+      setError(null)
+      const response = await fetch(`/api/v1/students/${studentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(student),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to update student")
+      }
+
+      router.push("/admin/students")
+    } catch (err: any) {
+      console.error("Error updating student:", err)
+      setError(err.message || "Failed to update student. Please try again.")
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   return (
@@ -151,9 +177,22 @@ export default function EditStudentPage() {
           Edit Student
         </h2>
 
-        {/* FORM */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-start gap-2">
+            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+            {error}
+          </div>
+        )}
 
-        <div className="grid grid-cols-2 gap-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p>Loading student details...</p>
+          </div>
+        ) : (
+          <>
+            {/* FORM */}
+            <div className="grid grid-cols-2 gap-4">
 
           <div>
             <label className="text-sm text-gray-700">Student ID</label>
@@ -235,23 +274,35 @@ export default function EditStudentPage() {
 
         {/* BUTTONS */}
 
-        <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 mt-6">
 
-          <button
-            onClick={()=>router.push("/admin/students")}
-            className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100"
-          >
-            Cancel
-          </button>
+            <button
+              onClick={()=>router.push("/admin/students")}
+              disabled={isUpdating}
+              className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+            >
+              Cancel
+            </button>
 
-          <button
-            onClick={updateStudent}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Update Student
-          </button>
+            <button
+              onClick={updateStudent}
+              disabled={isUpdating}
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isUpdating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Updating...
+                </>
+              ) : (
+                "Update Student"
+              )}
+            </button>
 
-        </div>
+          </div>
+
+          </>
+        )}
 
       </div>
 

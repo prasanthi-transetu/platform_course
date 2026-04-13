@@ -12,13 +12,34 @@ export default function DeleteStudentPage() {
   const [associatedBatch, setAssociatedBatch] = useState(false) // controls Delete button
   const [checkboxChecked, setCheckboxChecked] = useState(false) // checkbox state
 
-  useEffect(() => {
-    // Get student from localStorage
-    const students = JSON.parse(localStorage.getItem("students") || "[]")
-    const found = students.find((s: any) => s.id === studentId)
-    if (found) setStudent(found)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    // By default checkbox is UNMARKED, admin can choose
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await fetch(`/api/v1/students/${studentId}`)
+        if (!response.ok) {
+          if (response.status === 404) throw new Error("Student not found")
+          throw new Error("Failed to fetch student details")
+        }
+        const data = await response.json()
+        setStudent(data)
+      } catch (err: any) {
+        console.error("Error fetching student:", err)
+        setError(err.message || "Failed to load student data")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (studentId) {
+      fetchStudent()
+    }
+
     setCheckboxChecked(false)
     setAssociatedBatch(false)
   }, [studentId])
@@ -28,24 +49,52 @@ export default function DeleteStudentPage() {
     setAssociatedBatch(!checkboxChecked) // Disable delete if checked
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!student || associatedBatch) return
-    let students = JSON.parse(localStorage.getItem("students") || "[]")
-    students = students.filter((s: any) => s.id !== student.id)
-    localStorage.setItem("students", JSON.stringify(students))
-    router.push("/admin/students")
+    
+    try {
+      setIsDeleting(true)
+      setError(null)
+      const response = await fetch(`/api/v1/students/${studentId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete student")
+      }
+
+      router.push("/admin/students")
+    } catch (err: any) {
+      console.error("Error deleting student:", err)
+      setError(err.message || "Failed to delete student. Please try again.")
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
-  if (!student) return <p className="p-6 text-gray-700">Loading student...</p>
+  if (isLoading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3 text-gray-500 font-medium">
+      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <p>Loading student details...</p>
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-md text-center space-y-6">
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-start gap-2">
+            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+            {error}
+          </div>
+        )}
+
         {/* Header */}
         <h1 className="text-xl font-semibold text-gray-900">
           Are you sure you want to delete{" "}
-          <span className="text-red-600">{student.name}</span>?
+          <span className="text-red-600">{student?.name || "this student"}</span>?
         </h1>
 
         {/* Batch checkbox */}
@@ -65,19 +114,27 @@ export default function DeleteStudentPage() {
         <div className="flex justify-between mt-6">
           <button
             onClick={() => router.push("/admin/students")}
-            className="flex-1 mr-2 px-6 py-2 rounded-lg font-medium border border-gray-300 text-gray-900 hover:bg-gray-100"
+            disabled={isDeleting}
+            className="flex-1 mr-2 px-6 py-2 rounded-lg font-medium border border-gray-300 text-gray-900 hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
 
           <button
             onClick={handleDelete}
-            disabled={associatedBatch}
-            className={`flex-1 ml-2 px-6 py-2 rounded-lg font-medium text-white ${
-              associatedBatch ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
+            disabled={associatedBatch || isDeleting}
+            className={`flex-1 ml-2 px-6 py-2 rounded-lg font-medium text-white flex items-center justify-center gap-2 ${
+              associatedBatch || isDeleting ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
             }`}
           >
-            Delete
+            {isDeleting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </button>
         </div>
       </div>

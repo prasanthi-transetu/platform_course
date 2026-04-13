@@ -11,23 +11,28 @@ export default function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
 
-  const itemsPerPage = 3
-
-  const defaultStudents = [
-    { id: "STU-001", name: "John Carter", email: "john@email.com", institution: "Oxford Institute", course: "Computer Science", status: "Active" },
-    { id: "STU-002", name: "Emma Watson", email: "emma@email.com", institution: "Stanford Hub", course: "AI", status: "Active" },
-    { id: "STU-003", name: "Michael Brown", email: "michael@email.com", institution: "Melbourne IT", course: "Cyber Security", status: "Inactive" },
-    { id: "STU-004", name: "Sophia Lee", email: "sophia@email.com", institution: "Tokyo Tech", course: "Software Engineering", status: "Active" }
-  ]
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const itemsPerPage = 10
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("students") || "[]")
-    if (stored.length === 0) {
-      localStorage.setItem("students", JSON.stringify(defaultStudents))
-      setStudents(defaultStudents)
-    } else {
-      setStudents(stored)
+    const fetchStudents = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch("/api/v1/students")
+        if (!response.ok) throw new Error("Failed to fetch students")
+        const data = await response.json()
+        setStudents(data)
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching students:", err)
+        setError("Failed to load students. Please try again later.")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchStudents()
   }, [])
 
   // SEARCH + FILTER
@@ -123,35 +128,58 @@ export default function StudentsPage() {
           </thead>
 
           <tbody>
-            {paginatedStudents.map((student, index) => (
-              <tr key={student.id} className="border-t hover:bg-gray-50">
-                <td className="p-4 text-gray-900">{student.id}</td>
-                <td className="p-4 text-gray-900">{student.name}</td>
-                <td className="p-4 text-gray-800">{student.email}</td>
-                <td className="p-4 text-gray-800">{student.institution}</td>
-                <td className="p-4 text-gray-800">{student.course}</td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 rounded-full text-xs ${student.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                    {student.status}
-                  </span>
-                </td>
-                <td className="p-4 text-center relative">
-                  <button onClick={() => setOpenMenu(openMenu === index ? null : index)}>
-                    <MoreVertical className="text-gray-900" />
-                  </button>
-                  {openMenu === index && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg z-10">
-                      <Link href={`/admin/students/edit/${student.id}`} className="block px-4 py-2 text-gray-900 hover:bg-gray-100">
-                        Edit
-                      </Link>
-                      <Link href={`/admin/students/delete/${student.id}`} className="block px-4 py-2 text-red-600 hover:bg-gray-100">
-                        Delete
-                      </Link>
-                    </div>
-                  )}
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-gray-500">
+                  <div className="flex justify-center items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    Loading students...
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-red-500">
+                  {error}
+                </td>
+              </tr>
+            ) : paginatedStudents.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-gray-500">
+                  No students found.
+                </td>
+              </tr>
+            ) : (
+              paginatedStudents.map((student, index) => (
+                <tr key={student.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 text-gray-900">{student.id}</td>
+                  <td className="p-4 text-gray-900">{student.name}</td>
+                  <td className="p-4 text-gray-800">{student.email}</td>
+                  <td className="p-4 text-gray-800">{student.institution}</td>
+                  <td className="p-4 text-gray-800">{student.course}</td>
+                  <td className="p-4">
+                    <span className={`px-3 py-1 rounded-full text-xs ${student.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                      {student.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center relative">
+                    <button onClick={() => setOpenMenu(openMenu === index ? null : index)}>
+                      <MoreVertical className="text-gray-900" />
+                    </button>
+                    {openMenu === index && (
+                      <div className="absolute right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg z-10">
+                        <Link href={`/admin/students/edit/${student.id}`} className="block px-4 py-2 text-gray-900 hover:bg-gray-100">
+                          Edit
+                        </Link>
+                        <Link href={`/admin/students/delete/${student.id}`} className="block px-4 py-2 text-red-600 hover:bg-gray-100">
+                          Delete
+                        </Link>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
