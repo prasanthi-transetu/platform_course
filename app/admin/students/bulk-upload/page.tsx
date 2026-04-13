@@ -13,6 +13,8 @@ export default function BulkUploadPage() {
   const [fileName, setFileName] = useState("")
   const [studentsPreview, setStudentsPreview] = useState<any[]>([])
   const [error, setError] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
 
   /* DOWNLOAD TEMPLATE */
 
@@ -113,26 +115,53 @@ STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
 
   /* UPLOAD STUDENTS */
 
-  const uploadStudents = () => {
-
+  const uploadStudents = async () => {
     if (studentsPreview.length === 0) {
-
       alert("Please upload CSV file first.")
       return
-
     }
 
-    const existing =
-      JSON.parse(localStorage.getItem("students") || "[]")
+    try {
+      setIsUploading(true)
+      setError("")
+      setUploadProgress({ current: 0, total: studentsPreview.length })
 
-    const updated = [...existing, ...studentsPreview]
+      let successCount = 0
+      let failCount = 0
 
-    localStorage.setItem("students", JSON.stringify(updated))
+      for (let i = 0; i < studentsPreview.length; i++) {
+        const student = studentsPreview[i]
+        try {
+          const response = await fetch("/api/v1/students", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(student),
+          })
 
-    alert("Students uploaded successfully!")
+          if (response.ok) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (err) {
+          failCount++
+        }
+        setUploadProgress(prev => ({ ...prev, current: i + 1 }))
+      }
 
-    router.push("/admin/students")
-
+      if (failCount === 0) {
+        alert(`Successfully uploaded all ${successCount} students!`)
+        router.push("/admin/students")
+      } else {
+        alert(`Upload complete. Success: ${successCount}, Failed: ${failCount}`)
+        router.push("/admin/students")
+      }
+    } catch (err: any) {
+      console.error("Bulk upload error:", err)
+      setError("An unexpected error occurred during upload.")
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
@@ -279,17 +308,25 @@ STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
 
           <button
             onClick={()=>router.push("/admin/students")}
-            className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100"
+            disabled={isUploading}
+            className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
 
           <button
             onClick={uploadStudents}
-            disabled={studentsPreview.length === 0}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            disabled={studentsPreview.length === 0 || isUploading}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
           >
-            Upload Students
+            {isUploading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                {uploadProgress.current}/{uploadProgress.total}...
+              </>
+            ) : (
+              "Upload Students"
+            )}
           </button>
 
         </div>
