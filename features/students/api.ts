@@ -49,16 +49,18 @@ export async function fetchStudent(id: string | number) {
   return result.data || result;
 }
 export async function createStudent(data: any) {
-  // Map frontend fields (name, status) to backend fields (first_name, last_name, lowercase status)
+  // Map frontend fields (name, status) to backend fields (first_name, last_name, full_name, lowercase status)
   const { first_name, last_name } = splitName(data.name || "");
   
   const payload = {
-    id: data.id, // Custom Student ID string (e.g. STU-007)
+    id: data.id, // Primary key id
+    student_id: data.id, // Fallback for custom ID
     first_name,
     last_name,
+    full_name: data.name,
     email: data.email,
     status: (data.status || "active").toLowerCase(),
-    course_id: data.course_id || data.course, // User confirmed course_id is a string
+    course_id: data.course_id || data.course, // Map 'course' or 'course_id' to 'course_id'
     institution: data.institution,
     password: data.password || "Password@123", // Default password if missing
     mobile_number: data.mobile_number,
