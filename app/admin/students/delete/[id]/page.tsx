@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { fetchStudent, deleteStudent } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
   const params = useParams()
   const router = useRouter()
-  const studentId = params.id
+  const studentId = params.id as string
 
   const [student, setStudent] = useState<any>(null)
   const [associatedBatch, setAssociatedBatch] = useState(false) // controls Delete button
@@ -17,16 +16,11 @@ export default function DeleteStudentPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchStudent = async () => {
+    const loadStudent = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const response = await fetch(`/api/v1/students/${studentId}`)
-        if (!response.ok) {
-          if (response.status === 404) throw new Error("Student not found")
-          throw new Error("Failed to fetch student details")
-        }
-        const data = await response.json()
+        const data = await fetchStudent(studentId)
         setStudent(data)
       } catch (err: any) {
         console.error("Error fetching student:", err)
@@ -37,7 +31,7 @@ export default function DeleteStudentPage() {
     }
 
     if (studentId) {
-      fetchStudent()
+      loadStudent()
     }
 
     setCheckboxChecked(false)
@@ -55,15 +49,7 @@ export default function DeleteStudentPage() {
     try {
       setIsDeleting(true)
       setError(null)
-      const response = await fetch(`/api/v1/students/${studentId}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to delete student")
-      }
-
+      await deleteStudent(studentId)
       router.push("/admin/students")
     } catch (err: any) {
       console.error("Error deleting student:", err)

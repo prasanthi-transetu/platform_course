@@ -10,13 +10,11 @@ export async function GET() {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
-    console.error(`GET Students proxy error [${BACKEND_URL}]:`, error.message);
-    // FALLBACK: Return an empty list with a demo mode flag
-    return NextResponse.json({ 
-      data: [], 
-      __demo_mode: true, 
-      message: "Backend unreachable. Entering Demo Mode (using local storage)." 
-    });
+    console.error(`GET Students proxy connection error [${BACKEND_URL}]:`, error.message);
+    return NextResponse.json(
+      { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
+      { status: 503 }
+    );
   }
 }
 
@@ -31,11 +29,10 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
-    console.error(`POST Student proxy error [${BACKEND_URL}]:`, error.message);
-    // FALLBACK: Return the body with a demo mode flag to tell frontend to save locally
-    return NextResponse.json({ 
-      __demo_mode: true, 
-      message: "Backend unreachable. Saving to local storage (Demo Mode)." 
-    }, { status: 201 });
+    console.error(`POST Student proxy connection error [${BACKEND_URL}]:`, error.message);
+    return NextResponse.json(
+      { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
+      { status: 503 }
+    );
   }
 }

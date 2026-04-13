@@ -1,16 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { X } from "lucide-react"
-import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation"
+import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api"
 
 export default function EditStudentPage() {
 
   const router = useRouter()
   const params = useParams()
 
-  const studentId = params.id
+  const studentId = params.id as string
 
   const [student, setStudent] = useState({
     id: "",
@@ -28,17 +25,19 @@ export default function EditStudentPage() {
   /* LOAD STUDENT DATA */
 
   useEffect(() => {
-    const fetchStudent = async () => {
+    const loadStudent = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const response = await fetch(`/api/v1/students/${studentId}`)
-        if (!response.ok) {
-          if (response.status === 404) throw new Error("Student not found")
-          throw new Error("Failed to fetch student details")
-        }
-        const data = await response.json()
-        setStudent(data)
+        const data = await fetchStudent(studentId)
+        
+        // Map backend fields to frontend state
+        setStudent({
+          ...data,
+          name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+          course: data.course_id || data.course || "",
+          status: data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : "Active"
+        })
       } catch (err: any) {
         console.error("Error fetching student:", err)
         setError(err.message || "Failed to load student data")
@@ -48,7 +47,7 @@ export default function EditStudentPage() {
     }
 
     if (studentId) {
-      fetchStudent()
+      loadStudent()
     }
   }, [studentId])
 
@@ -124,23 +123,13 @@ export default function EditStudentPage() {
 
   /* UPDATE STUDENT */
 
-  const updateStudent = async () => {
+  const handleUpdate = async () => {
     if (!validateAll()) return
 
     try {
       setIsUpdating(true)
       setError(null)
-      const response = await fetch(`/api/v1/students/${studentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(student),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to update student")
-      }
-
+      await updateStudentApi(studentId, student)
       router.push("/admin/students")
     } catch (err: any) {
       console.error("Error updating student:", err)
@@ -285,7 +274,7 @@ export default function EditStudentPage() {
             </button>
 
             <button
-              onClick={updateStudent}
+              onClick={handleUpdate}
               disabled={isUpdating}
               className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
             >

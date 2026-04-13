@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical, Upload } from "lucide-react"
+import { fetchStudents } from "@/features/students/api"
 import Link from "next/link"
 
 export default function StudentsPage() {
@@ -16,42 +17,28 @@ export default function StudentsPage() {
   const itemsPerPage = 10
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const loadStudents = async () => {
       try {
         setLoading(true)
-        const response = await fetch("/api/v1/students")
-        if (!response.ok) throw new Error("Failed to fetch students")
-        const data = await response.json()
-        
-        // MERGE API DATA WITH LOCAL STORAGE DATA
-        const localStudents = JSON.parse(localStorage.getItem("students") || "[]")
-        const apiStudents = Array.isArray(data) ? data : (data.data || [])
-        
-        // Filter out duplicates by ID, giving preference to API data
-        const combined = [...apiStudents]
-        localStudents.forEach((ls: any) => {
-          if (!combined.some(as => as.id === ls.id)) {
-            combined.push({ ...ls, isDemo: true })
-          }
-        })
-        
-        setStudents(combined)
+        const data = await fetchStudents()
+        setStudents(data)
         setError(null)
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching students:", err)
-        setError("Failed to load students. Please try again later.")
+        setError(err.message || "Failed to load students. Please ensure your backend is running.")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStudents()
+    loadStudents()
   }, [])
 
   // SEARCH + FILTER
   const filteredStudents = students.filter(student => {
+    const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
     const matchSearch =
-      student.name.toLowerCase().includes(search.toLowerCase()) ||
+      fullName.includes(search.toLowerCase()) ||
       student.email.toLowerCase().includes(search.toLowerCase()) ||
       student.id.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "All" || student.status === statusFilter
@@ -166,7 +153,9 @@ export default function StudentsPage() {
               paginatedStudents.map((student, index) => (
                 <tr key={student.id} className="border-t hover:bg-gray-50">
                   <td className="p-4 text-gray-900">{student.id}</td>
-                  <td className="p-4 text-gray-900">{student.name}</td>
+                  <td className="p-4 text-gray-900">
+                    {student.first_name} {student.last_name || ""}
+                  </td>
                   <td className="p-4 text-gray-800">{student.email}</td>
                   <td className="p-4 text-gray-800">{student.institution}</td>
                   <td className="p-4 text-gray-800">{student.course}</td>

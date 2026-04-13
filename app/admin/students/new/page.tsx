@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { isEmpty, isValidEmail, hasMinLength, inputErrorClass, errorTextClass } from "@/lib/validation";
+import { createStudent } from "@/features/students/api";
 
 export default function AddStudentPage() {
 
@@ -101,25 +102,7 @@ export default function AddStudentPage() {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      const response = await fetch("/api/v1/students", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(student),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create student");
-      }
-
-      // HANDLE DEMO MODE FALLBACK
-      if (data.__demo_mode) {
-        console.warn("DEMO MODE: Backend unreachable. Saving to local storage.");
-        const existing = JSON.parse(localStorage.getItem("students") || "[]");
-        localStorage.setItem("students", JSON.stringify([...existing, student]));
-        alert("Backend unreachable. Student saved to Local Storage (Demo Mode).");
-      }
-
+      await createStudent(student);
       router.push("/admin/students");
     } catch (err: any) {
       console.error("Error creating student:", err);
