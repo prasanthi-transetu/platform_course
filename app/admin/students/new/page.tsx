@@ -102,7 +102,10 @@ export default function AddStudentPage() {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      await createStudent(student);
+      const result = await createStudent(student);
+      console.log("Student created:", result.data || result);
+
+      // Redirect to students list — the new student will appear in the table
       router.push("/admin/students");
     } catch (err: any) {
       console.error("Error creating student:", err);

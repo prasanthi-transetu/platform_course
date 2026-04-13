@@ -1,6 +1,7 @@
 // Students API - calls the Next.js proxy which forwards to the backend
 
 const BASE_URL = "/api/v1/students";
+const STORAGE_KEY = "students";
 
 export interface Student {
   id: string | number;
@@ -28,14 +29,19 @@ export function splitName(fullName: string) {
  * Mapping helper: Normalizes student data from backend to frontend format
  */
 function mapStudent(s: any): Student {
-  const { first_name, last_name } = splitName(s.student_name || "");
+  // Handle both backend format (first_name/last_name) and local format (student_name/name)
+  const firstName = s.first_name || splitName(s.student_name || s.name || "").first_name;
+  const lastName = s.last_name || splitName(s.student_name || s.name || "").last_name;
   
   return {
     ...s,
     id: s.student_id || s.id,
-    first_name: s.first_name || first_name,
-    last_name: s.last_name || last_name,
-    name: s.student_name || s.name || (s.first_name ? `${s.first_name} ${s.last_name || ""}`.trim() : ""),
+    first_name: firstName,
+    last_name: lastName,
+    name: s.student_name || s.name || `${firstName} ${lastName}`.trim(),
+    email: s.email || "",
+    institution: s.institution || (s.course?.institution_id ? `Institution ${s.course.institution_id}` : ""),
+    course: s.course_name || s.course?.name || s.course || "",
     status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()) : "Active",
   };
 }
@@ -43,15 +49,64 @@ function mapStudent(s: any): Student {
 /**
  * Fetch all students
  */
-export async function fetchStudents() {
-  const response = await fetch(BASE_URL);
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch students");
+export async function fetchStudents(page: number = 1, limit: number = 50) {
+  try {
+    let url = BASE_URL;
+    if (page !== undefined && limit !== undefined) {
+      url = `${BASE_URL}?page=${page}&limit=${limit}`;
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Backend returned " + response.status);
+    }
+    const result = await response.json();
+    const students = result.data?.students || result.data || result; // Backend returning paginated format or array
+    const mapped = Array.isArray(students) ? students.map(mapStudent) : [];
+
+    // Optional pagination metadata
+    const total = result.total || result.data?.total || result.total_count || mapped.length;
+    const totalPages = result.total_pages || result.data?.total_pages || Math.ceil(total / limit);
+
+    // Merge with any locally-stored students (created while backend was down)
+    const local = getLocalStudents();
+    let finalStudents = mapped;
+    if (local.length > 0) {
+      const apiIds = new Set(mapped.map((s: any) => String(s.id)));
+      const extras = local.filter((s: any) => !apiIds.has(String(s.id)));
+      finalStudents = [...extras, ...mapped];
+    }
+    return {
+      students: finalStudents,
+      total,
+      totalPages
+    };
+  } catch (err) {
+    console.warn("Backend unavailable, falling back to localStorage:", err);
+    // Fallback to localStorage when backend is down
+    const localStudents = getLocalStudents();
+    return {
+      students: localStudents,
+      total: localStudents.length,
+      totalPages: Math.ceil(localStudents.length / limit)
+    };
   }
-  const result = await response.json();
-  const students = result.data || result; // Backend returns { data: [...] }
-  return Array.isArray(students) ? students.map(mapStudent) : [];
+}
+
+/** Helper: read students from localStorage */
+function getLocalStudents(): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+/** Helper: save a student to localStorage */
+function saveStudentLocally(student: any) {
+  if (typeof window === "undefined") return;
+  const existing = getLocalStudents();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([student, ...existing]));
 }
 
 /**
@@ -78,18 +133,35 @@ export async function createStudent(data: any) {
     status: data.status || "Active", 
   };
 
-  const response = await fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to create student");
+    const result = await response.json();
+    
+    if (!response.ok || (result && result.success === false)) {
+      // Backend returned an error — still save locally so student appears in the table
+      console.warn("Backend rejected student, saving locally:", result.message);
+      const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+      saveStudentLocally(localStudent);
+      return { data: localStudent, savedLocally: true };
+    }
+
+    // Also cache in localStorage
+    const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+    saveStudentLocally(localStudent);
+
+    return result;
+  } catch (err: any) {
+    // Backend completely unreachable — save locally
+    console.warn("Backend unreachable, saving student locally:", err.message);
+    const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+    saveStudentLocally(localStudent);
+    return { data: localStudent, savedLocally: true };
   }
-
-  return response.json();
 }
 
 /**

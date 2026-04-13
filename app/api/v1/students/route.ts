@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_STUDENTS_API_URL || "http://localhost:8000/api/v1/students";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(BACKEND_URL, {
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
+    
+    let url = BACKEND_URL;
+    if (page || limit) {
+      const query = new URLSearchParams();
+      if (page) query.append('page', page);
+      if (limit) query.append('limit', limit);
+      url = `${BACKEND_URL}?${query.toString()}`;
+    }
+
+    const response = await fetch(url, {
       headers: { "Content-Type": "application/json" },
     });
     const data = await response.json();

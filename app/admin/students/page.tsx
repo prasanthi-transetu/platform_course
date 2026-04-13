@@ -10,18 +10,22 @@ export default function StudentsPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
+  const [apiTotalPages, setApiTotalPages] = useState(1)
+  const [apiTotalStudents, setApiTotalStudents] = useState(0)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const itemsPerPage = 10
+  const itemsPerPage = 50
 
   useEffect(() => {
     const loadStudents = async () => {
       try {
         setLoading(true)
-        const data = await fetchStudents()
-        setStudents(data)
+        const data = await fetchStudents(currentPage, itemsPerPage)
+        setStudents(data.students)
+        setApiTotalPages(data.totalPages)
+        setApiTotalStudents(data.total)
         setError(null)
       } catch (err: any) {
         console.error("Error fetching students:", err)
@@ -32,23 +36,23 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [])
+  }, [currentPage])
 
   // SEARCH + FILTER
   const filteredStudents = students.filter(student => {
-    const fullName = `${student.first_name} ${student.last_name}`.toLowerCase()
+    const fullName = `${student.first_name || ''} ${student.last_name || ''}`.toLowerCase()
     const matchSearch =
       fullName.includes(search.toLowerCase()) ||
-      student.email.toLowerCase().includes(search.toLowerCase()) ||
-      student.id.toLowerCase().includes(search.toLowerCase())
+      (student.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      String(student.id || '').toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "All" || student.status === statusFilter
     return matchSearch && matchStatus
   })
 
-  // PAGINATION
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage)
+  // PAGINATION (Backend-driven)
+  const totalPages = apiTotalPages;
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedStudents = filteredStudents; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 
@@ -74,11 +78,11 @@ export default function StudentsPage() {
         <div className="bg-white border rounded-xl p-6">
           <Users className="text-blue-600 mb-2" />
           <p className="text-gray-700 text-sm">Total Students</p>
-          <h2 className="text-2xl font-bold text-gray-900">{students.length}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{apiTotalStudents}</h2>
         </div>
         <div className="bg-white border rounded-xl p-6">
           <UserCheck className="text-green-600 mb-2" />
-          <p className="text-gray-700 text-sm">Active Students</p>
+          <p className="text-gray-700 text-sm">Active Students (Current Page)</p>
           <h2 className="text-2xl font-bold text-gray-900">{students.filter(s => s.status === "Active").length}</h2>
         </div>
         <div className="bg-white border rounded-xl p-6">
@@ -185,7 +189,7 @@ export default function StudentsPage() {
       {/* PAGINATION */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-800 font-medium">
-          Showing {startIndex + 1} – {Math.min(startIndex + itemsPerPage, filteredStudents.length)} of {filteredStudents.length}
+          Showing {apiTotalStudents > 0 ? startIndex + 1 : 0} – {Math.min(startIndex + students.length, apiTotalStudents)} of {apiTotalStudents}
         </p>
 
         <div className="flex gap-2">

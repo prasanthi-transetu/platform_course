@@ -6,8 +6,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       headers: { "Content-Type": "application/json" },
     });
@@ -26,8 +26,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const body = await request.json();
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "PUT",
@@ -49,8 +49,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
     });

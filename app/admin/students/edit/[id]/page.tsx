@@ -37,9 +37,11 @@ export default function EditStudentPage() {
         
         // Map backend fields to frontend state
         setStudent({
-          ...data,
+          id: String(data.id || ""),
           name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
-          course: data.course_id || data.course || "",
+          email: data.email || "",
+          institution: (data as any).institution || "",
+          course: String(data.course_id || (data as any).course || ""),
           status: data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : "Active"
         })
       } catch (err: any) {
