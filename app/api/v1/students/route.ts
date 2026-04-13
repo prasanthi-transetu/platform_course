@@ -11,10 +11,12 @@ export async function GET() {
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
     console.error(`GET Students proxy error [${BACKEND_URL}]:`, error.message);
-    return NextResponse.json(
-      { message: `Failed to connect to backend at ${BACKEND_URL}. Ensure the backend is running and publicly accessible.` },
-      { status: 502 }
-    );
+    // FALLBACK: Return an empty list with a demo mode flag
+    return NextResponse.json({ 
+      data: [], 
+      __demo_mode: true, 
+      message: "Backend unreachable. Entering Demo Mode (using local storage)." 
+    });
   }
 }
 
@@ -30,9 +32,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
     console.error(`POST Student proxy error [${BACKEND_URL}]:`, error.message);
-    return NextResponse.json(
-      { message: `Failed to connect to backend at ${BACKEND_URL}. Ensure the backend is running and publicly accessible.` },
-      { status: 502 }
-    );
+    // FALLBACK: Return the body with a demo mode flag to tell frontend to save locally
+    return NextResponse.json({ 
+      __demo_mode: true, 
+      message: "Backend unreachable. Saving to local storage (Demo Mode)." 
+    }, { status: 201 });
   }
 }

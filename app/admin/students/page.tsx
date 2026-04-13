@@ -22,7 +22,20 @@ export default function StudentsPage() {
         const response = await fetch("/api/v1/students")
         if (!response.ok) throw new Error("Failed to fetch students")
         const data = await response.json()
-        setStudents(data)
+        
+        // MERGE API DATA WITH LOCAL STORAGE DATA
+        const localStudents = JSON.parse(localStorage.getItem("students") || "[]")
+        const apiStudents = Array.isArray(data) ? data : (data.data || [])
+        
+        // Filter out duplicates by ID, giving preference to API data
+        const combined = [...apiStudents]
+        localStudents.forEach((ls: any) => {
+          if (!combined.some(as => as.id === ls.id)) {
+            combined.push({ ...ls, isDemo: true })
+          }
+        })
+        
+        setStudents(combined)
         setError(null)
       } catch (err) {
         console.error("Error fetching students:", err)

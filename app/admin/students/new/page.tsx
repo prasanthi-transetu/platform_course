@@ -107,9 +107,17 @@ export default function AddStudentPage() {
         body: JSON.stringify(student),
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.message || "Failed to create student");
+      }
+
+      // HANDLE DEMO MODE FALLBACK
+      if (data.__demo_mode) {
+        console.warn("DEMO MODE: Backend unreachable. Saving to local storage.");
+        const existing = JSON.parse(localStorage.getItem("students") || "[]");
+        localStorage.setItem("students", JSON.stringify([...existing, student]));
+        alert("Backend unreachable. Student saved to Local Storage (Demo Mode).");
       }
 
       router.push("/admin/students");
