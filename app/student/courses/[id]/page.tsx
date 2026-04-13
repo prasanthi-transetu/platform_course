@@ -32,11 +32,11 @@ const courseData = {
       title: "Module 1: React Fundamentals",
       progress: "2/5",
       lessons: [
-        { id: "1.1", title: "Introduction to JSX", type: "video", duration: "12:15", completed: true },
-        { id: "1.2", title: "Understanding Components", type: "video", duration: "15:45", active: true },
-        { id: "1.3", title: "Props and Composition", type: "video", duration: "18:20", locked: true },
-        { id: "1.4", title: "State Management with Hooks", type: "video", duration: "22:10", locked: true },
-        { id: "quiz-1", title: "Module 1 Quiz", type: "quiz", questions: 10, locked: true },
+        { id: "1.1", title: "Introduction to JSX", type: "video", duration: "12:15", completed: true, active: false, locked: false },
+        { id: "1.2", title: "Understanding Components", type: "video", duration: "15:45", active: true, completed: false, locked: false },
+        { id: "1.3", title: "Props and Composition", type: "video", duration: "18:20", locked: true, active: false, completed: false },
+        { id: "1.4", title: "State Management with Hooks", type: "video", duration: "22:10", locked: true, active: false, completed: false },
+        { id: "quiz-1", title: "Module 1 Quiz", type: "quiz", questions: 10, locked: true, active: false, completed: false },
       ]
     },
     {
@@ -45,9 +45,9 @@ const courseData = {
       progress: "0/4",
       locked: true,
       lessons: [
-        { id: "2.1", title: "useEffect Deep Dive", type: "video", duration: "25:00", locked: true },
-        { id: "2.2", title: "Custom Hooks Patterns", type: "video", duration: "20:15", locked: true },
-        { id: "quiz-2", title: "Module 2 Quiz", type: "quiz", questions: 15, locked: true },
+        { id: "2.1", title: "useEffect Deep Dive", type: "video", duration: "25:00", locked: true, active: false, completed: false },
+        { id: "2.2", title: "Custom Hooks Patterns", type: "video", duration: "20:15", locked: true, active: false, completed: false },
+        { id: "quiz-2", title: "Module 2 Quiz", type: "quiz", questions: 15, locked: true, active: false, completed: false },
       ]
     }
   ]
