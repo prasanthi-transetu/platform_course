@@ -93,11 +93,22 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
   } catch (err) {
     console.warn("Backend unavailable, falling back to localStorage:", err);
     // Fallback to localStorage when backend is down
-    const localStudents = getLocalStudents();
+    let localStudents = getLocalStudents();
+    
+    // Apply local search filtering if a search query was provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      localStudents = localStudents.filter((student: any) => {
+        const fullName = `${student.first_name || ''} ${student.last_name || ''} ${student.name || ''}`.toLowerCase();
+        return fullName.includes(searchLower) || 
+               String(student.id || "").toLowerCase().includes(searchLower);
+      });
+    }
+
     return {
       students: localStudents,
       total: localStudents.length,
-      totalPages: Math.ceil(localStudents.length / limit)
+      totalPages: Math.ceil(localStudents.length / limit) || 1
     };
   }
 }
