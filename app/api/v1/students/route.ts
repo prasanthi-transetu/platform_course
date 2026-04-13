@@ -7,12 +7,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
+    const search = searchParams.get('search');
     
     let url = BACKEND_URL;
-    if (page || limit) {
+    if (page || limit || search) {
       const query = new URLSearchParams();
       if (page) query.append('page', page);
       if (limit) query.append('limit', limit);
+      if (search) query.append('search', search);
       url = `${BACKEND_URL}?${query.toString()}`;
     }
 

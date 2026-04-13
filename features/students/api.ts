@@ -49,12 +49,22 @@ function mapStudent(s: any): Student {
 /**
  * Fetch all students
  */
-export async function fetchStudents(page: number = 1, limit: number = 50) {
+export async function fetchStudents(page: number = 1, limit: number = 50, search?: string) {
   try {
     let url = BASE_URL;
+    const query = new URLSearchParams();
     if (page !== undefined && limit !== undefined) {
-      url = `${BASE_URL}?page=${page}&limit=${limit}`;
+      query.append("page", page.toString());
+      query.append("limit", limit.toString());
     }
+    if (search) {
+      query.append("search", search);
+    }
+    
+    if (query.toString()) {
+      url = `${BASE_URL}?${query.toString()}`;
+    }
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error("Backend returned " + response.status);

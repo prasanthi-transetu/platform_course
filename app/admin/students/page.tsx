@@ -8,6 +8,7 @@ import Link from "next/link"
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
   const [apiTotalPages, setApiTotalPages] = useState(1)
@@ -19,10 +20,17 @@ export default function StudentsPage() {
   const itemsPerPage = 50
 
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 500)
+    return () => clearTimeout(timeoutId)
+  }, [search])
+
+  useEffect(() => {
     const loadStudents = async () => {
       try {
         setLoading(true)
-        const data = await fetchStudents(currentPage, itemsPerPage)
+        const data = await fetchStudents(currentPage, itemsPerPage, debouncedSearch)
         setStudents(data.students)
         setApiTotalPages(data.totalPages)
         setApiTotalStudents(data.total)
@@ -36,17 +44,12 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [currentPage])
+  }, [currentPage, debouncedSearch])
 
-  // SEARCH + FILTER
+  // STATUS FILTER (Local)
   const filteredStudents = students.filter(student => {
-    const fullName = `${student.first_name || ''} ${student.last_name || ''}`.toLowerCase()
-    const matchSearch =
-      fullName.includes(search.toLowerCase()) ||
-      (student.email || '').toLowerCase().includes(search.toLowerCase()) ||
-      String(student.id || '').toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "All" || student.status === statusFilter
-    return matchSearch && matchStatus
+    return matchStatus
   })
 
   // PAGINATION (Backend-driven)
