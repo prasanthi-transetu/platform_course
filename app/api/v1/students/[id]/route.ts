@@ -13,9 +13,12 @@ export async function GET(
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error(`GET Student ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to fetch student from backend" }, { status: 500 });
+  } catch (error: any) {
+    console.error(`GET Student proxy error [${BACKEND_URL}/${id}]:`, error.message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}. Ensure the backend is running and publicly accessible.` },
+      { status: 502 }
+    );
   }
 }
 
@@ -33,9 +36,12 @@ export async function PUT(
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error(`PUT Student ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to update student in backend" }, { status: 500 });
+  } catch (error: any) {
+    console.error(`PUT Student proxy error [${BACKEND_URL}/${id}]:`, error.message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}. Ensure the backend is running and publicly accessible.` },
+      { status: 502 }
+    );
   }
 }
 
@@ -55,8 +61,11 @@ export async function DELETE(
     
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error(`DELETE Student ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to delete student in backend" }, { status: 500 });
+  } catch (error: any) {
+    console.error(`DELETE Student proxy error [${BACKEND_URL}/${id}]:`, error.message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}. Ensure the backend is running and publicly accessible.` },
+      { status: 502 }
+    );
   }
 }

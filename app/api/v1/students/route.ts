@@ -9,9 +9,12 @@ export async function GET() {
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error("GET Students proxy error:", error);
-    return NextResponse.json({ message: "Failed to fetch students from backend" }, { status: 500 });
+  } catch (error: any) {
+    console.error(`GET Students proxy error [${BACKEND_URL}]:`, error.message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}. Ensure the backend is running and publicly accessible.` },
+      { status: 502 }
+    );
   }
 }
 
@@ -25,8 +28,11 @@ export async function POST(request: NextRequest) {
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error("POST Student proxy error:", error);
-    return NextResponse.json({ message: "Failed to create student in backend" }, { status: 500 });
+  } catch (error: any) {
+    console.error(`POST Student proxy error [${BACKEND_URL}]:`, error.message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}. Ensure the backend is running and publicly accessible.` },
+      { status: 502 }
+    );
   }
 }
