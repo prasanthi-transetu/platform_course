@@ -49,21 +49,14 @@ export async function fetchStudent(id: string | number) {
   return result.data || result;
 }
 export async function createStudent(data: any) {
-  // Map frontend fields (name, status) to backend fields (first_name, last_name, full_name, lowercase status)
-  const { first_name, last_name } = splitName(data.name || "");
-  
+  // STRICT mapping to match backend developer's successful test case
   const payload = {
-    id: data.id, // Primary key id
-    student_id: data.id, // Fallback for custom ID
-    first_name,
-    last_name,
-    full_name: data.name,
+    student_id: data.id, 
+    student_name: data.name,
     email: data.email,
-    status: (data.status || "active").toLowerCase(),
-    course_id: data.course_id || data.course, // Map 'course' or 'course_id' to 'course_id'
     institution: data.institution,
-    password: data.password || "Password@123", // Default password if missing
-    mobile_number: data.mobile_number,
+    course: data.course_id || data.course,
+    status: data.status || "Active", 
   };
 
   const response = await fetch(BASE_URL, {
@@ -87,13 +80,18 @@ export async function updateStudent(id: string | number, data: any) {
   const { first_name, last_name } = splitName(data.name || "");
 
   const payload: any = {
-    first_name: data.first_name || first_name,
-    last_name: data.last_name || last_name,
+    // Verified fields
+    student_name: data.name || (data.first_name ? `${data.first_name} ${data.last_name || ""}`.trim() : undefined),
     email: data.email,
-    status: data.status ? data.status.toLowerCase() : undefined,
-    course_id: data.course_id || data.course,
+    status: data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1).toLowerCase()) : undefined,
+    course: data.course_id || data.course,
     institution: data.institution,
     mobile_number: data.mobile_number,
+
+    // Legacy fallbacks
+    first_name: data.first_name || first_name,
+    last_name: data.last_name || last_name,
+    course_id: data.course_id || data.course,
   };
 
   // Remove undefined fields
