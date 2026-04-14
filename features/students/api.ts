@@ -1,8 +1,6 @@
 // Students API - fetches directly from backend to avoid server-to-localhost proxy issues on Vercel
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BASE_URL = `${API_HOST}/api/v1/students`;
-const STORAGE_KEY = "students";
-
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json"
@@ -46,13 +44,13 @@ function mapStudent(s: any): Student {
   const firstName = s.first_name || splitName(s.student_name || s.name || "").first_name;
   const lastName = s.last_name || splitName(s.student_name || s.name || "").last_name;
   
-  // Clean up ID to be a pure number
+  // Clean up ID to be a pure number - remove all non-digits
   let rawId = s.student_id || s.id;
   let cleanId = rawId;
-  if (typeof rawId === 'string') {
-    const numMatch = rawId.match(/\d+/);
-    if (numMatch) {
-      cleanId = parseInt(numMatch[0], 10);
+  if (rawId !== undefined && rawId !== null) {
+    const strippedId = String(rawId).replace(/[^0-9]/g, "");
+    if (strippedId) {
+      cleanId = parseInt(strippedId, 10);
     }
   }
   
@@ -64,8 +62,6 @@ function mapStudent(s: any): Student {
     name: s.student_name || s.name || `${firstName} ${lastName}`.trim(),
     course_name: s.course_name || s.course?.name || "",
     email: s.email || "",
-    institution: s.institution || (s.course?.institution_id ? `Institution ${s.course.institution_id}` : ""),
-    course: s.course_name || s.course?.name || s.course || "",
     status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()) : "Active",
   };
 }

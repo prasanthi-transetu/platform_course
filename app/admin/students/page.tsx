@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, UserCheck, BookOpen, MoreVertical, Upload } from "lucide-react"
+import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
 import { fetchStudents } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
@@ -63,12 +63,9 @@ export default function StudentsPage() {
       <div className="flex justify-between items-center mb-2">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Student Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage enrollments, batches, and student information.</p>
+          <p className="text-sm text-gray-500 mt-1">Manage enrollments, courses, and student information.</p>
         </div>
         <div className="flex gap-4">
-          <button className="flex items-center gap-2 border border-gray-200 text-gray-700 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm">
-            <Upload size={16} /> Bulk Upload CSV
-          </button>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors shadow-sm"
@@ -98,8 +95,8 @@ export default function StudentsPage() {
           <div className="w-10 h-10 bg-purple-50 flex items-center justify-center rounded-lg mb-4">
             <BookOpen size={20} className="text-purple-600" />
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">Avg. Courses/Student</p>
-          <h2 className="text-3xl font-bold text-gray-900">3.4</h2>
+          <p className="text-gray-500 text-sm font-medium mb-1">Students Today</p>
+          <h2 className="text-3xl font-bold text-gray-900">0</h2>
         </div>
       </div>
 
