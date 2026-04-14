@@ -1,6 +1,5 @@
-// Students API - calls the Next.js proxy which forwards to the backend
-
-const BASE_URL = "/api/v1/students";
+// Students API - fetches directly from backend to avoid server-to-localhost proxy issues on Vercel
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1/students";
 const STORAGE_KEY = "students";
 
 export interface Student {
