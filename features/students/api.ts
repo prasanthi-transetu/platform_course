@@ -49,7 +49,7 @@ function mapStudent(s: any): Student {
 /**
  * Fetch all students
  */
-export async function fetchStudents(page: number = 1, limit: number = 50, search?: string) {
+export async function fetchStudents(page: number = 1, limit: number = 50, search?: string, statusFilter?: string, courseId?: string) {
   try {
     let url = BASE_URL;
     const query = new URLSearchParams();
@@ -59,6 +59,12 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
     }
     if (search) {
       query.append("search", search);
+    }
+    if (statusFilter && statusFilter !== "All") {
+      query.append("status", statusFilter.toLowerCase()); // Sends 'active' or 'inactive'
+    }
+    if (courseId && courseId.trim() !== "") {
+      query.append("course_id", courseId);
     }
     
     if (query.toString()) {

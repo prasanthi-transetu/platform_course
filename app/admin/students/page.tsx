@@ -11,6 +11,7 @@ export default function StudentsPage() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
+  const [courseFilter, setCourseFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [apiTotalPages, setApiTotalPages] = useState(1)
   const [apiTotalStudents, setApiTotalStudents] = useState(0)
@@ -32,7 +33,7 @@ export default function StudentsPage() {
     const loadStudents = async () => {
       try {
         setLoading(true)
-        const data = await fetchStudents(currentPage, itemsPerPage, debouncedSearch)
+        const data = await fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter)
         setStudents(data.students)
         setApiTotalPages(data.totalPages)
         setApiTotalStudents(data.total)
@@ -46,18 +47,12 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [currentPage, debouncedSearch, isModalOpen])
-
-  // STATUS FILTER (Local)
-  const filteredStudents = students.filter(student => {
-    const matchStatus = statusFilter === "All" || student.status === statusFilter
-    return matchStatus
-  })
+  }, [currentPage, debouncedSearch, statusFilter, courseFilter, isModalOpen])
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedStudents = filteredStudents; 
+  const paginatedStudents = students; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 
@@ -127,8 +122,19 @@ export default function StudentsPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Status:</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Course ID:</span>
+              <input
+                type="text"
+                placeholder="All"
+                value={courseFilter}
+                onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1) }}
+                className="w-16 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }}
