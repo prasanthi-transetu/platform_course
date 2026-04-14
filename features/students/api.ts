@@ -33,9 +33,19 @@ function mapStudent(s: any): Student {
   const firstName = s.first_name || splitName(s.student_name || s.name || "").first_name;
   const lastName = s.last_name || splitName(s.student_name || s.name || "").last_name;
   
+  // Clean up ID to be a pure number
+  let rawId = s.student_id || s.id;
+  let cleanId = rawId;
+  if (typeof rawId === 'string') {
+    const numMatch = rawId.match(/\d+/);
+    if (numMatch) {
+      cleanId = parseInt(numMatch[0], 10);
+    }
+  }
+  
   return {
     ...s,
-    id: s.student_id || s.id,
+    id: cleanId,
     first_name: firstName,
     last_name: lastName,
     name: s.student_name || s.name || `${firstName} ${lastName}`.trim(),
