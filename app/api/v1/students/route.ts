@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_STUDENTS_API_URL || "http://localhost:8000/api/v1/students";
+const API_HOST = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_STUDENTS_API_URL || `${API_HOST}/api/v1/students`;
 
 export async function GET(request: NextRequest) {
   try {

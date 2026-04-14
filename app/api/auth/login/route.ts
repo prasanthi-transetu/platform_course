@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     }
 
     // If a backend URL is configured, proxy the request to it
-    const backendUrl = process.env.BACKEND_AUTH_URL;
+    const apiHost = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const backendUrl = process.env.BACKEND_AUTH_URL || `${apiHost}/auth/login`;
     if (backendUrl) {
       try {
         const backendResponse = await fetch(backendUrl, {

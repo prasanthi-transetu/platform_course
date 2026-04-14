@@ -1,5 +1,6 @@
 // Students API - fetches directly from backend to avoid server-to-localhost proxy issues on Vercel
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1/students";
+const API_HOST = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = `${API_HOST}/api/v1/students`;
 const STORAGE_KEY = "students";
 
 export interface Student {
