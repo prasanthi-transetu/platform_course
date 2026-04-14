@@ -99,7 +99,6 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
       throw new Error("Backend returned " + response.status);
     }
     const result = await response.json();
-    const result = await response.json();
     const students = result.data?.students || result.data || result; // Backend returning paginated format or array
     const mapped = Array.isArray(students) ? students.map(mapStudent) : [];
 
