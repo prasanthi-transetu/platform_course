@@ -193,8 +193,13 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 text-gray-500">{student.email}</td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-600">CS-2024-A</span>
-                        {index % 3 === 0 && <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-purple-50 text-purple-600">DS-102</span>}
+                        {student.course_name ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-600">
+                            {student.course_name}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs italic">No batch</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">

@@ -39,6 +39,7 @@ function mapStudent(s: any): Student {
     first_name: firstName,
     last_name: lastName,
     name: s.student_name || s.name || `${firstName} ${lastName}`.trim(),
+    course_name: s.course_name || s.course?.name || "",
     email: s.email || "",
     institution: s.institution || (s.course?.institution_id ? `Institution ${s.course.institution_id}` : ""),
     course: s.course_name || s.course?.name || s.course || "",
