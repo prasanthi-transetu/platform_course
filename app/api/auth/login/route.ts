@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     // If a backend URL is configured, proxy the request to it
-    const apiHost = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiHost = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
     const backendUrl = process.env.BACKEND_AUTH_URL || `${apiHost}/auth/login`;
     if (backendUrl) {
       try {

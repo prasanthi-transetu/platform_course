@@ -1,5 +1,5 @@
 // Students API - fetches directly from backend to avoid server-to-localhost proxy issues on Vercel
-const API_HOST = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BASE_URL = `${API_HOST}/api/v1/students`;
 const STORAGE_KEY = "students";
 
@@ -144,7 +144,7 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
     }
     
     return {
-      students: localStudents,
+      students: localStudents.map(mapStudent),
       total: localStudents.length,
       totalPages: Math.ceil(localStudents.length / limit) || 1
     };

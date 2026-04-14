@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_HOST = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = process.env.BACKEND_API_URL || `${API_HOST}/api/v1/institutions`;
 
 export async function GET() {
