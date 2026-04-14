@@ -146,6 +146,7 @@ export default function StudentsPage() {
             </select>
           </div>
         </div>
+        </div>
 
         {/* Table */}
         <div className="overflow-x-auto min-h-[400px]">

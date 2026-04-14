@@ -3,16 +3,17 @@ const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.on
 const BASE_URL = `${API_HOST}/api/v1/students`;
 const STORAGE_KEY = "students";
 
-function getAuthHeaders() {
-  if (typeof document === "undefined") return { "Content-Type": "application/json" };
-  const match = document.cookie.match(new RegExp("(^| )token=([^;]+)"));
-  if (match) {
-    return { 
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${match[2]}` 
-    };
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json"
+  };
+  if (typeof document !== "undefined") {
+    const match = document.cookie.match(/(^| )token=([^;]+)/);
+    if (match) {
+      headers["Authorization"] = `Bearer ${match[2]}`;
+    }
   }
-  return { "Content-Type": "application/json" };
+  return headers;
 }
 
 export interface Student {
