@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (email === adminEmail && password === adminPassword) {
       return NextResponse.json({
-        token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc2MTcwMzQwLCJleHAiOjE3NzYxNzEyNDB9.DP2qNMUUgzNZFvgarjqlXOuk-zBemODA1ylJ_KR3RTc`,
+        token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc2MTc3MjM1LCJleHAiOjE3NzYxNzgxMzV9.4Z0x4SCjHshLFWISIJqAAX6YbRYe_pyw3al8riTDH4Q`,
         role: "admin",
         user: {
           email: adminEmail,
