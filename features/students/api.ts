@@ -161,22 +161,22 @@ export async function createStudent(data: any) {
  * Update a student with mapping
  */
 export async function updateStudent(id: string | number, data: any) {
+  // Extract or split the name if only a single name field was provided
   const { first_name, last_name } = splitName(data.name || "");
 
   const payload: any = {
-    // Verified fields
-    student_name: data.name || (data.first_name ? `${data.first_name} ${data.last_name || ""}`.trim() : undefined),
+    first_name: data.firstName || data.first_name || first_name,
+    last_name: data.lastName || data.last_name || last_name,
     email: data.email,
-    status: data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1).toLowerCase()) : undefined,
-    course: data.course_id || data.course,
-    institution: data.institution,
-    mobile_number: data.mobile_number,
-
-    // Legacy fallbacks
-    first_name: data.first_name || first_name,
-    last_name: data.last_name || last_name,
-    course_id: data.course_id || data.course,
+    mobile_number: data.mobile || data.mobile_number,
+    password: data.password || undefined,
+    notes: data.notes || undefined,
+    status: data.status ? data.status.toLowerCase() : undefined,
+    course_id: data.courseId || data.course_id || data.course, // Support both
   };
+
+  // Remove undefined fields to prevent backend rejection
+  Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
   // Remove undefined fields
   Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);

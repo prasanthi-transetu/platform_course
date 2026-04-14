@@ -1,308 +1,259 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { X } from "lucide-react"
-import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation"
-import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api"
-
+"use client";
+ 
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { X, Eye, EyeOff } from "lucide-react";
+import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api";
+ 
 export default function EditStudentPage() {
-
-  const router = useRouter()
-  const params = useParams()
-
-  const studentId = params.id as string
-
-  const [student, setStudent] = useState({
-    id: "",
-    name: "",
+  const router = useRouter();
+  const params = useParams();
+  const studentId = params.id as string;
+ 
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
-    institution: "",
-    course: "",
-    status: "Active"
-  })
-
-  const [isLoading, setIsLoading] = useState(true)
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  /* LOAD STUDENT DATA */
-
+    mobile: "",
+    password: "",
+    notes: "",
+    status: "active"
+  });
+ 
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+ 
   useEffect(() => {
     const loadStudent = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
-        const data = await fetchStudent(studentId)
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchStudent(studentId);
         
-        // Map backend fields to frontend state
-        setStudent({
-          id: String(data.id || ""),
-          name: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+        setFormData({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
           email: data.email || "",
-          institution: (data as any).institution || "",
-          course: String(data.course_id || (data as any).course || ""),
-          status: data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : "Active"
-        })
+          mobile: data.mobile_number || "",
+          password: "", // Don't pre-fill password for security
+          notes: data.notes || "",
+          status: data.status || "active"
+        });
       } catch (err: any) {
-        console.error("Error fetching student:", err)
-        setError(err.message || "Failed to load student data")
+        console.error("Error fetching student:", err);
+        setError(err.message || "Failed to load student data");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-
+    };
+ 
     if (studentId) {
-      loadStudent()
+      loadStudent();
     }
-  }, [studentId])
-
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
-
-  /* HANDLE INPUT */
-
-  const handleChange = (e:any) => {
-    const { name, value } = e.target
-    setStudent(prev => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors(prev => { const n = {...prev}; delete n[name]; return n; })
+  }, [studentId]);
+ 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    setError(null);
+ 
+    // Basic Validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.mobile) {
+      setError("Please fill in all required fields.");
+      setIsUpdating(false);
+      return;
     }
-  }
-
-  const handleBlur = (e:any) => {
-    const { name } = e.target
-    setTouched(prev => ({ ...prev, [name]: true }))
-    validateField(name, student[name as keyof typeof student])
-  }
-
-  const validateField = (name: string, value: string): string => {
-    let error = ""
-    switch (name) {
-      case "name":
-        if (isEmpty(value)) error = "Student name is required"
-        break
-      case "email":
-        if (isEmpty(value)) error = "Email is required"
-        else if (!isValidEmail(value)) error = "Invalid email format"
-        break
-      case "institution":
-        if (isEmpty(value)) error = "Institution is required"
-        break
-      case "course":
-        if (isEmpty(value)) error = "Course is required"
-        break
-    }
-    setErrors(prev => {
-      if (error) return { ...prev, [name]: error }
-      const n = { ...prev }; delete n[name]; return n
-    })
-    return error
-  }
-
-  const validateAll = (): boolean => {
-    const fields = ["name", "email", "institution", "course"]
-    const allTouched: Record<string, boolean> = {}
-    let hasError = false
-    for (const field of fields) {
-      allTouched[field] = true
-      if (validateField(field, student[field as keyof typeof student])) hasError = true
-    }
-    setTouched(prev => ({ ...prev, ...allTouched }))
-    return !hasError
-  }
-
-  const getInputClass = (field: string) => {
-    const base = "border rounded-lg w-full px-3 py-2 text-gray-900 transition-all duration-200"
-    return touched[field] && errors[field] ? `${base} ${inputErrorClass}` : base
-  }
-
-  const ErrorMsg = ({ field }: { field: string }) => {
-    if (!touched[field] || !errors[field]) return null
-    return (
-      <p className={errorTextClass}>
-        <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-        {errors[field]}
-      </p>
-    )
-  }
-
-  /* UPDATE STUDENT */
-
-  const handleUpdate = async () => {
-    if (!validateAll()) return
-
+ 
     try {
-      setIsUpdating(true)
-      setError(null)
-      await updateStudentApi(studentId, student)
-      router.push("/admin/students")
+      await updateStudentApi(studentId, formData);
+      router.push("/admin/students");
     } catch (err: any) {
-      console.error("Error updating student:", err)
-      setError(err.message || "Failed to update student. Please try again.")
+      console.error(err);
+      setError(err.message || "Something went wrong updating the student");
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
-
+  };
+ 
+  const handleClose = () => {
+    router.push("/admin/students");
+  };
+ 
   return (
-
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-
-      {/* BLUR BACKGROUND */}
-
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-
-      {/* MODAL */}
-
-      <div className="relative bg-white rounded-xl shadow-lg w-full max-w-2xl p-8">
-
-        {/* CLOSE BUTTON */}
-
-        <button
-          onClick={()=>router.push("/admin/students")}
-          className="absolute right-4 top-4 text-gray-600 hover:text-black"
-        >
-          <X size={20}/>
-        </button>
-
-        {/* TITLE */}
-
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Edit Student
-        </h2>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-start gap-2">
-            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-            {error}
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p>Loading student details...</p>
-          </div>
-        ) : (
-          <>
-            {/* FORM */}
-            <div className="grid grid-cols-2 gap-4">
-
-          <div>
-            <label className="text-sm text-gray-700">Student ID</label>
-            <input
-              type="text"
-              name="id"
-              value={student.id}
-              disabled
-              className="border rounded-lg w-full px-3 py-2 bg-gray-100 text-gray-800"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700">Full Name <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              name="name"
-              value={student.name}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={getInputClass("name")}
-            />
-            <ErrorMsg field="name" />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700">Email <span className="text-red-400">*</span></label>
-            <input
-              type="email"
-              name="email"
-              value={student.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={getInputClass("email")}
-            />
-            <ErrorMsg field="email" />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700">Institution <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              name="institution"
-              value={student.institution}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={getInputClass("institution")}
-            />
-            <ErrorMsg field="institution" />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700">Course <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              name="course"
-              value={student.course}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={getInputClass("course")}
-            />
-            <ErrorMsg field="course" />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700">Status</label>
-            <select
-              name="status"
-              value={student.status}
-              onChange={handleChange}
-              className="border rounded-lg w-full px-3 py-2 text-gray-900"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Background Overlay */}
+      <div 
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+        onClick={handleClose}
+      />
+ 
+      {/* Modal Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-[600px] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Student</h2>
+          <button 
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none"
+          >
+            <X size={20} />
+          </button>
         </div>
-
-        {/* BUTTONS */}
-
-          <div className="flex justify-end gap-3 mt-6">
-
-            <button
-              onClick={()=>router.push("/admin/students")}
-              disabled={isUpdating}
-              className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100 disabled:opacity-50"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleUpdate}
-              disabled={isUpdating}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isUpdating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Updating...
-                </>
-              ) : (
-                "Update Student"
+ 
+        {/* Body */}
+        <div className="px-6 py-6 bg-white overflow-y-auto">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <p>Loading student details...</p>
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-red-600 rounded-full" />
+                  {error}
+                </div>
               )}
-            </button>
-
-          </div>
-
-          </>
-        )}
-
+ 
+              <form id="edit-student-form" onSubmit={handleSubmit} className="space-y-5">
+                {/* Name Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">First Name</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="e.g. John"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Last Name</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="e.g. Doe"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+ 
+                {/* Email Address */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="john.doe@example.com"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  />
+                </div>
+ 
+                {/* Mobile & Password Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                    <input
+                      type="text"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="relative">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">New Password (Optional)</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+ 
+                {/* Status & Notes */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+ 
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</label>
+                    <span className="text-xs text-gray-400">Optional</span>
+                  </div>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    placeholder="Add any relevant student notes here..."
+                    rows={3}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 resize-none"
+                  />
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+ 
+        {/* Footer */}
+        <div className="px-6 py-5 bg-white border-t border-gray-100 flex justify-end gap-3 mt-auto rounded-b-2xl">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="edit-student-form"
+            disabled={isUpdating || isLoading}
+            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            {isUpdating ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : null}
+            Update Student
+          </button>
+        </div>
       </div>
-
     </div>
-
-  )
-
-}
+  );
+}
