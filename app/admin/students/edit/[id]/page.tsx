@@ -216,8 +216,7 @@ export default function EditStudentPage() {
             </>
           )}
         </div>
-        </div>
- 
+
         {/* Footer */}
         <div className="px-8 py-6 bg-white border-t border-gray-50 flex justify-end gap-3 mt-auto rounded-b-[24px]">
           <button

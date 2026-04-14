@@ -72,94 +72,96 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
       />
 
       {/* Modal Dialog */}
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-[600px] overflow-hidden flex flex-col">
+      <div className="relative bg-white rounded-[24px] shadow-2xl w-full max-w-[560px] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
-          <h2 className="text-xl font-semibold text-gray-900">Add Student</h2>
+        <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-white">
+          <h2 className="text-xl font-bold text-[#1E293B]">Add Student</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors bg-transparent border-none"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6 bg-white overflow-y-auto">
+        <div className="px-8 py-8 bg-white overflow-y-auto max-h-[70vh]">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-center gap-3">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
               {error}
             </div>
           )}
 
-          <form id="add-student-form" onSubmit={handleSubmit} className="space-y-5">
+          <form id="add-student-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Name Row */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">First Name</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">First Name</label>
                 <input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
-                  placeholder="e.g. John"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  placeholder="Ethan"
+                  className="w-full bg-[#F8FAFC] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Last Name</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Last Name</label>
                 <input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  placeholder="e.g. Doe"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  placeholder="Richards"
+                  className="w-full bg-[#F8FAFC] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium"
                 />
               </div>
             </div>
 
             {/* Email Address */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="john.doe@example.com"
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                placeholder="ethan.r@example.com"
+                className="w-full bg-[#F8FAFC] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium"
               />
             </div>
 
             {/* Mobile & Password Row */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Mobile Number</label>
                 <input
                   type="text"
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  placeholder="+1 (234) 567-8900"
+                  className="w-full bg-[#F8FAFC] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium"
                 />
               </div>
               <div className="relative">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Password</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 font-mono"
+                    placeholder="secretpassword"
+                    className="w-full bg-[#F8FAFC] border-none rounded-xl pl-4 pr-12 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -170,27 +172,27 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
             {/* Notes */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</label>
-                <span className="text-xs text-gray-400">Optional</span>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notes</label>
+                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Optional</span>
               </div>
               <textarea
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
                 placeholder="Add any relevant student notes here..."
-                rows={3}
-                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 resize-none"
+                rows={4}
+                className="w-full bg-[#F8FAFC] border-none rounded-xl px-4 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-gray-300 font-medium resize-none"
               />
             </div>
           </form>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-5 bg-white border-t border-gray-100 flex justify-end gap-3 mt-auto rounded-b-2xl">
+        <div className="px-8 py-6 bg-white border-t border-gray-50 flex justify-end gap-3 mt-auto rounded-b-[24px]">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="px-8 py-3 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all focus:outline-none"
           >
             Cancel
           </button>
@@ -198,7 +200,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
             type="submit"
             form="add-student-form"
             disabled={isSubmitting}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-8 py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 focus:outline-none"
           >
             {isSubmitting ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -5,6 +5,7 @@ import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
 import { fetchStudents } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
+import EditStudentModal from "@/components/EditStudentModal"
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
@@ -17,6 +18,7 @@ export default function StudentsPage() {
   const [apiTotalStudents, setApiTotalStudents] = useState(0)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingStudentId, setEditingStudentId] = useState<string | number | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -219,9 +221,15 @@ export default function StudentsPage() {
                       </button>
                       {openMenu === index && (
                         <div className="absolute right-8 top-8 mt-1 w-32 bg-white border border-gray-100 rounded-lg shadow-lg z-10 py-1">
-                          <Link href={`/admin/students/edit/${student.id}`} className="block px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50">
+                          <button 
+                            onClick={() => {
+                              setEditingStudentId(student.id);
+                              setOpenMenu(null);
+                            }}
+                            className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50"
+                          >
                             Edit
-                          </Link>
+                          </button>
                           <Link href={`/admin/students/delete/${student.id}`} className="block px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-50">
                             Delete
                           </Link>
@@ -284,6 +292,13 @@ export default function StudentsPage() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSuccess={() => { setIsModalOpen(false); setCurrentPage(1); }} 
+      />
+
+      <EditStudentModal
+        studentId={editingStudentId}
+        isOpen={editingStudentId !== null}
+        onClose={() => setEditingStudentId(null)}
+        onSuccess={() => { setEditingStudentId(null); setCurrentPage(1); }}
       />
     </div>
   )
