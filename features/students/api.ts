@@ -144,17 +144,13 @@ export async function fetchStudent(id: string | number) {
   return mapStudent(student);
 }
 export async function createStudent(data: any) {
-  // STRICT mapping to match backend developer's successful test case
   const payload = {
-    student_id: data.id, 
-    student_name: data.name,
+    first_name: data.first_name,
+    last_name: data.last_name,
     email: data.email,
     mobile_number: data.mobile_number,
     password: data.password,
     notes: data.notes,
-    institution: data.institution,
-    course: data.course_id || data.course,
-    status: data.status || "Active", 
   };
 
   try {
@@ -169,20 +165,21 @@ export async function createStudent(data: any) {
     if (!response.ok || (result && result.success === false)) {
       // Backend returned an error — still save locally so student appears in the table
       console.warn("Backend rejected student, saving locally:", result.message);
-      const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+      const localStudent = { ...payload, id: `STU-${Math.floor(1000 + Math.random() * 9000)}`, first_name: data.first_name, last_name: data.last_name, status: "Active" };
       saveStudentLocally(localStudent);
       return { data: localStudent, savedLocally: true };
     }
 
     // Also cache in localStorage
-    const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+    const id = result.data?.id || result.id || `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+    const localStudent = { ...payload, id, first_name: data.first_name, last_name: data.last_name, status: "Active" };
     saveStudentLocally(localStudent);
 
     return result;
   } catch (err: any) {
     // Backend completely unreachable — save locally
     console.warn("Backend unreachable, saving student locally:", err.message);
-    const localStudent = { ...payload, id: data.id, name: data.name, first_name: data.name?.split(' ')[0] || '', last_name: data.name?.split(' ').slice(1).join(' ') || '' };
+    const localStudent = { ...payload, id: `STU-${Math.floor(1000 + Math.random() * 9000)}`, first_name: data.first_name, last_name: data.last_name, status: "Active" };
     saveStudentLocally(localStudent);
     return { data: localStudent, savedLocally: true };
   }

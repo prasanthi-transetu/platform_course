@@ -44,14 +44,12 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
 
     try {
       const payload = {
-        name: `${formData.firstName} ${formData.lastName}`,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
         mobile_number: formData.mobile,
         password: formData.password,
         notes: formData.notes,
-        // Optional default fallbacks just in case the backend crashes without them
-        id: `STU-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: "Active"
       };
 
       await createStudent(payload);
