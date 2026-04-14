@@ -22,6 +22,9 @@ export interface Student {
   mobile_number?: string;
   status: "active" | "inactive";
   course_id?: number | string;
+  course_name?: string;
+  name?: string;
+  notes?: string;
   created_at?: string;
 }
 
