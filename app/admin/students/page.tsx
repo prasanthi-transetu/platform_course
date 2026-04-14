@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical, Upload } from "lucide-react"
 import { fetchStudents } from "@/features/students/api"
 import Link from "next/link"
+import AddStudentModal from "@/components/AddStudentModal"
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
@@ -14,6 +15,7 @@ export default function StudentsPage() {
   const [apiTotalPages, setApiTotalPages] = useState(1)
   const [apiTotalStudents, setApiTotalStudents] = useState(0)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +46,7 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [currentPage, debouncedSearch])
+  }, [currentPage, debouncedSearch, isModalOpen])
 
   // STATUS FILTER (Local)
   const filteredStudents = students.filter(student => {
@@ -70,9 +72,12 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex gap-3">
-          <Link href="/admin/students/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+          >
             + Add Student
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -205,6 +210,12 @@ export default function StudentsPage() {
           </button>
         </div>
       </div>
+
+      <AddStudentModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => setIsModalOpen(false)} 
+      />
     </div>
   )
 }
