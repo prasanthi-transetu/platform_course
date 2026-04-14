@@ -6,18 +6,7 @@ import { MoreVertical, Users, Layers, CheckCircle, XCircle } from "lucide-react"
 
 export default function BatchesPage() {
 
-  const batches = [
-    { id: 1, name: "Full Stack Development", instructor: "Sai", students: 25, status: "Active" },
-    { id: 2, name: "React Advanced", instructor: "Prasanthi", students: 18, status: "Active" },
-    { id: 3, name: "NodeJS Bootcamp", instructor: "Anil", students: 22, status: "Active" },
-    { id: 4, name: "Angular Training", instructor: "Ravi", students: 15, status: "Inactive" },
-    { id: 5, name: "Python Data Science", instructor: "Kiran", students: 28, status: "Active" },
-    { id: 6, name: "Java Backend", instructor: "Mahesh", students: 20, status: "Active" },
-    { id: 7, name: "NextJS Bootcamp", instructor: "Suresh", students: 12, status: "Inactive" },
-    { id: 8, name: "Spring Boot", instructor: "Rahul", students: 19, status: "Active" },
-    { id: 9, name: "UI UX Design", instructor: "Anusha", students: 30, status: "Active" },
-    { id: 10, name: "Machine Learning", instructor: "Ajay", students: 16, status: "Active" },
-  ];
+  const batches: any[] = [];
 
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
