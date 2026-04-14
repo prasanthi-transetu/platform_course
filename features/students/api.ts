@@ -3,6 +3,18 @@ const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.on
 const BASE_URL = `${API_HOST}/api/v1/students`;
 const STORAGE_KEY = "students";
 
+function getAuthHeaders() {
+  if (typeof document === "undefined") return { "Content-Type": "application/json" };
+  const match = document.cookie.match(new RegExp("(^| )token=([^;]+)"));
+  if (match) {
+    return { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${match[2]}` 
+    };
+  }
+  return { "Content-Type": "application/json" };
+}
+
 export interface Student {
   id: string | number;
   first_name: string;
@@ -82,7 +94,7 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
       url = `${BASE_URL}?${query.toString()}`;
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: getAuthHeaders() });
     if (!response.ok) {
       throw new Error("Backend returned " + response.status);
     }
@@ -172,7 +184,7 @@ function saveStudentLocally(student: any) {
  * Fetch a single student by ID
  */
 export async function fetchStudent(id: string | number) {
-  const response = await fetch(`${BASE_URL}/${id}`);
+  const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.message || "Failed to fetch student details");
@@ -194,7 +206,7 @@ export async function createStudent(data: any) {
   try {
     const response = await fetch(BASE_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -249,7 +261,7 @@ export async function updateStudent(id: string | number, data: any) {
 
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -267,6 +279,7 @@ export async function updateStudent(id: string | number, data: any) {
 export async function deleteStudent(id: string | number) {
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders()
   });
 
   if (!response.ok) {
