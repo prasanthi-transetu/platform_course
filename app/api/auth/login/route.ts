@@ -31,16 +31,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Local authentication using environment variables
-    const adminEmail = process.env.ADMIN_EMAIL || "prasanthitransetu@gmail.com";
-    const adminPassword = process.env.ADMIN_PASSWORD || "Pressi@2316";
+    const adminEmail = process.env.ADMIN_EMAIL || "superadmin@lms.com";
+    const adminPassword = process.env.ADMIN_PASSWORD || "SuperLmsPassword@2026";
 
     if (email === adminEmail && password === adminPassword) {
       return NextResponse.json({
-        token: `lms_token_${Date.now()}`,
+        token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc2MTcwMzQwLCJleHAiOjE3NzYxNzEyNDB9.DP2qNMUUgzNZFvgarjqlXOuk-zBemODA1ylJ_KR3RTc`,
         role: "admin",
         user: {
           email: adminEmail,
-          name: "Admin User",
+          name: "Super Admin",
         },
         message: "Login successful",
       });
