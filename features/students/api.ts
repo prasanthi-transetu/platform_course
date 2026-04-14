@@ -99,85 +99,23 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
       throw new Error("Backend returned " + response.status);
     }
     const result = await response.json();
+    const result = await response.json();
     const students = result.data?.students || result.data || result; // Backend returning paginated format or array
     const mapped = Array.isArray(students) ? students.map(mapStudent) : [];
 
     // Optional pagination metadata
     const total = result.pagination?.total || result.total || result.data?.total || result.total_count || mapped.length;
-    const totalPages = result.pagination?.totalPages || result.pagination?.total_pages || result.total_pages || result.data?.total_pages || Math.ceil(total / limit);
+    const totalPages = result.pagination?.totalPages || result.pagination?.total_pages || result.total_pages || result.data?.total_pages || Math.ceil(total / limit) || 1;
 
-    // Merge with any locally-stored students (created while backend was down)
-    let local = getLocalStudents();
-    
-    // Apply local filters before merging
-    if (search) {
-      const searchLower = search.toLowerCase();
-      local = local.filter((student: any) => {
-        const fullName = `${student.first_name || ''} ${student.last_name || ''} ${student.name || ''}`.toLowerCase();
-        return fullName.includes(searchLower) || String(student.id || "").toLowerCase().includes(searchLower);
-      });
-    }
-    if (statusFilter && statusFilter !== "All") {
-      local = local.filter((student: any) => student.status?.toLowerCase() === statusFilter.toLowerCase());
-    }
-    if (courseId && courseId.trim() !== "") {
-      local = local.filter((student: any) => String(student.course_id || student.course || student.course_name) === courseId);
-    }
-
-    let finalStudents = mapped;
-    if (local.length > 0) {
-      const apiIds = new Set(mapped.map((s: any) => String(s.id)));
-      const extras = local.filter((s: any) => !apiIds.has(String(s.id)));
-      finalStudents = [...extras, ...mapped];
-    }
     return {
-      students: finalStudents,
-      total: total + (finalStudents.length - mapped.length),
-      totalPages: Math.max(totalPages, Math.ceil(finalStudents.length / limit))
+      students: mapped,
+      total: total,
+      totalPages: totalPages
     };
-  } catch (err) {
-    console.warn("Backend unavailable, falling back to localStorage:", err);
-    // Fallback to localStorage when backend is down
-    let localStudents = getLocalStudents();
-    
-    // Apply local search filtering if a search query was provided
-    if (search) {
-      const searchLower = search.toLowerCase();
-      localStudents = localStudents.filter((student: any) => {
-        const fullName = `${student.first_name || ''} ${student.last_name || ''} ${student.name || ''}`.toLowerCase();
-        return fullName.includes(searchLower) || String(student.id || "").toLowerCase().includes(searchLower);
-      });
-    }
-    if (statusFilter && statusFilter !== "All") {
-      localStudents = localStudents.filter((student: any) => student.status?.toLowerCase() === statusFilter.toLowerCase());
-    }
-    if (courseId && courseId.trim() !== "") {
-      localStudents = localStudents.filter((student: any) => String(student.course_id || student.course || student.course_name) === courseId);
-    }
-    
-    return {
-      students: localStudents.map(mapStudent),
-      total: localStudents.length,
-      totalPages: Math.ceil(localStudents.length / limit) || 1
-    };
+  } catch (err: any) {
+    console.error("Backend fetch failed:", err);
+    throw err;
   }
-}
-
-/** Helper: read students from localStorage */
-function getLocalStudents(): any[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-/** Helper: save a student to localStorage */
-function saveStudentLocally(student: any) {
-  if (typeof window === "undefined") return;
-  const existing = getLocalStudents();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([student, ...existing]));
 }
 
 /**
@@ -213,25 +151,13 @@ export async function createStudent(data: any) {
     const result = await response.json();
     
     if (!response.ok || (result && result.success === false)) {
-      // Backend returned an error — still save locally so student appears in the table
-      console.warn("Backend rejected student, saving locally:", result.message);
-      const localStudent = { ...payload, id: Math.floor(1000 + Math.random() * 9000), first_name: data.first_name, last_name: data.last_name, status: "Active" };
-      saveStudentLocally(localStudent);
-      return { data: localStudent, savedLocally: true };
+      throw new Error(result.message || result.error || "Failed to create student on backend");
     }
-
-    // Also cache in localStorage
-    const id = result.data?.id || result.id || Math.floor(1000 + Math.random() * 9000);
-    const localStudent = { ...payload, id, first_name: data.first_name, last_name: data.last_name, status: "Active" };
-    saveStudentLocally(localStudent);
 
     return result;
   } catch (err: any) {
-    // Backend completely unreachable — save locally
-    console.warn("Backend unreachable, saving student locally:", err.message);
-    const localStudent = { ...payload, id: Math.floor(1000 + Math.random() * 9000), first_name: data.first_name, last_name: data.last_name, status: "Active" };
-    saveStudentLocally(localStudent);
-    return { data: localStudent, savedLocally: true };
+    console.error("Backend unreachable or rejected student creation:", err.message);
+    throw err;
   }
 }
 
