@@ -193,13 +193,13 @@ export async function createStudent(data: any) {
     if (!response.ok || (result && result.success === false)) {
       // Backend returned an error — still save locally so student appears in the table
       console.warn("Backend rejected student, saving locally:", result.message);
-      const localStudent = { ...payload, id: `STU-${Math.floor(1000 + Math.random() * 9000)}`, first_name: data.first_name, last_name: data.last_name, status: "Active" };
+      const localStudent = { ...payload, id: Math.floor(1000 + Math.random() * 9000), first_name: data.first_name, last_name: data.last_name, status: "Active" };
       saveStudentLocally(localStudent);
       return { data: localStudent, savedLocally: true };
     }
 
     // Also cache in localStorage
-    const id = result.data?.id || result.id || `STU-${Math.floor(1000 + Math.random() * 9000)}`;
+    const id = result.data?.id || result.id || Math.floor(1000 + Math.random() * 9000);
     const localStudent = { ...payload, id, first_name: data.first_name, last_name: data.last_name, status: "Active" };
     saveStudentLocally(localStudent);
 
@@ -207,7 +207,7 @@ export async function createStudent(data: any) {
   } catch (err: any) {
     // Backend completely unreachable — save locally
     console.warn("Backend unreachable, saving student locally:", err.message);
-    const localStudent = { ...payload, id: `STU-${Math.floor(1000 + Math.random() * 9000)}`, first_name: data.first_name, last_name: data.last_name, status: "Active" };
+    const localStudent = { ...payload, id: Math.floor(1000 + Math.random() * 9000), first_name: data.first_name, last_name: data.last_name, status: "Active" };
     saveStudentLocally(localStudent);
     return { data: localStudent, savedLocally: true };
   }

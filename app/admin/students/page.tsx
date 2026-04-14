@@ -185,8 +185,8 @@ export default function StudentsPage() {
               ) : (
                 paginatedStudents.map((student, index) => (
                   <tr key={student.id} className="hover:bg-gray-50/50 transition-colors bg-white">
-                    <td className="px-6 py-4 text-gray-500 text-sm">
-                      #{String(student.id).startsWith("STU-") ? student.id : `STU-${student.id}`}
+                    <td className="px-6 py-4 text-gray-500 text-sm font-medium">
+                      {student.id}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
