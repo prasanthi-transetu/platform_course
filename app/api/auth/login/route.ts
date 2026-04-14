@@ -24,9 +24,8 @@ export async function POST(request: NextRequest) {
 
         const data = await backendResponse.json();
         return NextResponse.json(data, { status: backendResponse.status });
-      } catch {
-        // If backend is unreachable, fall through to local auth
-        console.warn("Backend unreachable, falling back to local auth");
+      } catch (error) {
+        console.warn("Backend unreachable, falling back to local auth:", error);
       }
     }
 
@@ -36,13 +35,13 @@ export async function POST(request: NextRequest) {
 
     if (email === adminEmail && password === adminPassword) {
       return NextResponse.json({
-        token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc2MTc3MjM1LCJleHAiOjE3NzYxNzgxMzV9.4Z0x4SCjHshLFWISIJqAAX6YbRYe_pyw3al8riTDH4Q`,
+        token: `mock_admin_token`, // Fallback only
         role: "admin",
         user: {
           email: adminEmail,
           name: "Super Admin",
         },
-        message: "Login successful",
+        message: "Login successful (Fallback)",
       });
     }
 

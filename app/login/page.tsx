@@ -30,8 +30,8 @@ export default function LoginPage() {
       
       document.cookie = `mock_auth_role=${role}; path=/;`;
       
-      if (data?.token) {
-        document.cookie = `token=${data.token}; path=/;`;
+      if (data?.token || data?.accessToken) {
+        document.cookie = `token=${data.token || data.accessToken}; path=/;`;
       }
 
       // Use full page navigation so the server-side middleware
