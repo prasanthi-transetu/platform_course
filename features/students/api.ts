@@ -84,7 +84,23 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
     const totalPages = result.pagination?.totalPages || result.pagination?.total_pages || result.total_pages || result.data?.total_pages || Math.ceil(total / limit);
 
     // Merge with any locally-stored students (created while backend was down)
-    const local = getLocalStudents();
+    let local = getLocalStudents();
+    
+    // Apply local filters before merging
+    if (search) {
+      const searchLower = search.toLowerCase();
+      local = local.filter((student: any) => {
+        const fullName = `${student.first_name || ''} ${student.last_name || ''} ${student.name || ''}`.toLowerCase();
+        return fullName.includes(searchLower) || String(student.id || "").toLowerCase().includes(searchLower);
+      });
+    }
+    if (statusFilter && statusFilter !== "All") {
+      local = local.filter((student: any) => student.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (courseId && courseId.trim() !== "") {
+      local = local.filter((student: any) => String(student.course_id || student.course || student.course_name) === courseId);
+    }
+
     let finalStudents = mapped;
     if (local.length > 0) {
       const apiIds = new Set(mapped.map((s: any) => String(s.id)));
@@ -93,8 +109,8 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
     }
     return {
       students: finalStudents,
-      total,
-      totalPages
+      total: total + (finalStudents.length - mapped.length),
+      totalPages: Math.max(totalPages, Math.ceil(finalStudents.length / limit))
     };
   } catch (err) {
     console.warn("Backend unavailable, falling back to localStorage:", err);
@@ -106,11 +122,16 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
       const searchLower = search.toLowerCase();
       localStudents = localStudents.filter((student: any) => {
         const fullName = `${student.first_name || ''} ${student.last_name || ''} ${student.name || ''}`.toLowerCase();
-        return fullName.includes(searchLower) || 
-               String(student.id || "").toLowerCase().includes(searchLower);
+        return fullName.includes(searchLower) || String(student.id || "").toLowerCase().includes(searchLower);
       });
     }
-
+    if (statusFilter && statusFilter !== "All") {
+      localStudents = localStudents.filter((student: any) => student.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (courseId && courseId.trim() !== "") {
+      localStudents = localStudents.filter((student: any) => String(student.course_id || student.course || student.course_name) === courseId);
+    }
+    
     return {
       students: localStudents,
       total: localStudents.length,
