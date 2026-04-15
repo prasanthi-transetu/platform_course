@@ -98,9 +98,9 @@ export default function EditStudentPage() {
           <h2 className="text-xl font-bold text-[#1E293B]">Edit Student</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-2 rounded-full border-none"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 

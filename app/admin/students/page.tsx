@@ -64,15 +64,24 @@ export default function StudentsPage() {
       {/* HEADER */}
       <div className="flex justify-between items-center mb-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Student Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage enrollments, courses, and student information.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Student Management</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage enrollments, batches, and student information.</p>
         </div>
         <div className="flex gap-4">
+          <Link 
+            href="/admin/students/bulk-upload"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+            Bulk upload (CSV)
+          </Link>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors shadow-sm"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-bold text-sm transition-all shadow-lg shadow-blue-500/20"
           >
-            + Add Student
+            + ADD STUDENT
           </button>
         </div>
       </div>

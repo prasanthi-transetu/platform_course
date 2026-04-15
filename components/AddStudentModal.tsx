@@ -79,9 +79,9 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
           <h2 className="text-xl font-bold text-[#1E293B]">Add Student</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-2 rounded-full border-none"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
