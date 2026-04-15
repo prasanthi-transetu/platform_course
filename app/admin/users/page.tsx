@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { X, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
+import { createUser, fetchUsers } from "@/features/users/api";
+import { fetchInstitutions, Institution } from "@/features/institutions/api";
 
 interface UserData {
   id: string;
@@ -21,6 +23,10 @@ export default function UsersPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -32,6 +38,45 @@ export default function UsersPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    loadUsers();
+    loadInstitutions();
+  }, []);
+
+  const loadInstitutions = async () => {
+    try {
+      const data = await fetchInstitutions();
+      if (Array.isArray(data)) {
+        setInstitutions(data);
+      }
+    } catch (error) {
+      console.error("Error loading institutions:", error);
+    }
+  };
+
+  const loadUsers = async () => {
+    setIsFetching(true);
+    try {
+      const data = await fetchUsers();
+      // If data is an array of users, map them to UserData interface
+      if (Array.isArray(data)) {
+        const mappedUsers = data.map((u: any) => ({
+          id: u.id?.toString() || "N/A",
+          name: u.name || "N/A",
+          email: u.email || "N/A",
+          role: u.role || "N/A",
+          joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
+          avatar: `https://i.pravatar.cc/150?u=${u.id}`
+        }));
+        setUsers(mappedUsers);
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const validateField = (field: string, value: string, isEdit = false): string => {
     let error = "";
@@ -63,10 +108,25 @@ export default function UsersPage() {
     return !hasError;
   };
 
-  const handleCreateSubmit = () => {
+  const handleCreateSubmit = async () => {
     if (handleValidation(false)) {
-      setIsCreateModalOpen(false);
-      alert("User created successfully!");
+      setIsLoading(true);
+      try {
+        await createUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          institution: formData.institution
+        });
+        setIsCreateModalOpen(false);
+        loadUsers(); // Refresh the list
+        alert("User created successfully!");
+      } catch (error: any) {
+        alert(error.message || "Failed to create user");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -82,71 +142,8 @@ export default function UsersPage() {
     alert("User deleted successfully!");
   };
 
-  const acceptedUsers: UserData[] = [
-    {
-      id: "USR-101",
-      name: "Robert Fox",
-      email: "robert.fox@example.com",
-      role: "Admin",
-      joinedDate: "Jan 12, 2024",
-      avatar: "https://i.pravatar.cc/150?u=robert",
-    },
-    {
-      id: "USR-102",
-      name: "Jane Cooper",
-      email: "jane.c@lmspost.com",
-      role: "Institution Rep",
-      joinedDate: "Feb 05, 2024",
-      avatar: "https://i.pravatar.cc/150?u=jane",
-    },
-    {
-      id: "USR-103",
-      name: "Cody Fisher",
-      email: "cody.f@lmspost.com",
-      role: "Admin",
-      joinedDate: "Mar 15, 2024",
-      avatar: "https://i.pravatar.cc/150?u=cody",
-    },
-    {
-      id: "USR-104",
-      name: "Kristin Watson",
-      email: "kristin.w@lms... ",
-      role: "Admin",
-      joinedDate: "Apr 10, 2024",
-      avatar: "https://i.pravatar.cc/150?u=kristin",
-    },
-    {
-      id: "USR-105",
-      name: "Cameron Williamson",
-      email: "cameron.w@i...",
-      role: "Institution Rep",
-      joinedDate: "May 22, 2024",
-      avatar: "https://i.pravatar.cc/150?u=cameron",
-    },
-  ];
-
-  const pendingUsers: UserData[] = [
-    {
-      id: "REQ-201",
-      name: "Eleanor Pena",
-      email: "eleanor.p@test.com",
-      role: "Admin",
-      joinedDate: "Requested: Oct 01, 2024",
-      avatar: "https://i.pravatar.cc/150?u=eleanor",
-    },
-    {
-      id: "REQ-202",
-      name: "Guy Hawkins",
-      email: "guy.h@demo.org",
-      role: "Institution Rep",
-      joinedDate: "Requested: Oct 02, 2024",
-      avatar: "https://i.pravatar.cc/150?u=guy",
-    },
-  ];
-
-  const roles = ["All Roles", "Admin", "Institution Rep"];
-
-  const currentData = activeTab === "accepted" ? acceptedUsers : pendingUsers;
+  const roles = ["All Roles", "Admin", "Institution Rep", "Tutor"];
+  const currentData = users; // Use real data from API
 
   const filtered = currentData.filter((u) => {
     const matchesSearch =
@@ -505,9 +502,10 @@ export default function UsersPage() {
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, false);}}
                   className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
                 >
-                  <option value="">Search and select institution...</option>
-                  <option>Global Tech Institute</option>
-                  <option>LMS Portal Academy</option>
+                  <option value="">Select an institution...</option>
+                  {institutions.map((inst) => (
+                    <option key={inst.id} value={inst.name}>{inst.name}</option>
+                  ))}
                 </select>
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
@@ -516,8 +514,18 @@ export default function UsersPage() {
               <button onClick={() => setIsCreateModalOpen(false)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
                 Cancel
               </button>
-              <button onClick={handleCreateSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
-                Create User
+              <button 
+                onClick={handleCreateSubmit} 
+                disabled={isLoading}
+                className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Creating...
+                  </>
+                ) : (
+                  "Create User"
+                )}
               </button>
             </div>
           </div>
@@ -595,9 +603,10 @@ export default function UsersPage() {
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, true);}}
                   className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
                 >
-                  <option value="">Search and select institution...</option>
-                  <option>Global Tech Institute</option>
-                  <option>LMS Portal Academy</option>
+                  <option value="">Select an institution...</option>
+                  {institutions.map((inst) => (
+                    <option key={inst.id} value={inst.name}>{inst.name}</option>
+                  ))}
                 </select>
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
