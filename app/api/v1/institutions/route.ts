@@ -3,10 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = process.env.BACKEND_API_URL || `${API_HOST}/api/v1/institutions`;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
   try {
     const response = await fetch(BACKEND_URL, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
@@ -17,11 +21,15 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("Authorization");
   try {
     const body = await request.json();
     const response = await fetch(BACKEND_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
       body: JSON.stringify(body),
     });
     const data = await response.json();
