@@ -18,9 +18,9 @@ export default function BulkUploadPage() {
 
   /* DOWNLOAD TEMPLATE */
   const downloadTemplate = () => {
-    const csv = `first_name,last_name,email,mobile_number,password,notes,course_id
-John,Doe,john.doe@example.com,1234567890,password123,Bulk upload test,1
-Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2,2`
+    const csv = `first_name,last_name,email,mobile_number,password,notes
+John,Doe,john.doe@example.com,1234567890,password123,Bulk upload test
+Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2`
 
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
