@@ -63,7 +63,7 @@ export default function UsersPage() {
       if (Array.isArray(data)) {
         const mappedUsers = data.map((u: any) => ({
           id: u.id?.toString() || "N/A",
-          name: u.name || "N/A",
+          name: u.full_name || u.name || "N/A",
           email: u.email || "N/A",
           role: u.role || "N/A",
           joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
