@@ -89,39 +89,38 @@ function mapStudent(s: any): Student {
  * Fetch all students
  */
 export async function fetchStudents(page: number = 1, limit: number = 50, search?: string, statusFilter?: string, courseId?: string) {
-  try {
-    let url = BASE_URL;
-    const query = new URLSearchParams();
-    if (page !== undefined && limit !== undefined) {
-      query.append("page", page.toString());
-      query.append("limit", limit.toString());
-    }
-    if (search) {
-      query.append("search", search);
-    }
-    if (statusFilter && statusFilter !== "All") {
-      query.append("status", statusFilter.toLowerCase()); // Sends 'active' or 'inactive'
-    }
-    if (courseId && courseId.trim() !== "") {
-      query.append("course_id", courseId);
-    }
-    
-    if (query.toString()) {
-      url = `${BASE_URL}?${query.toString()}`;
-    }
+  let url = BASE_URL;
+  const query = new URLSearchParams();
+  if (page !== undefined && limit !== undefined) {
+    query.append("page", page.toString());
+    query.append("limit", limit.toString());
+  }
+  if (search) {
+    query.append("search", search);
+  }
+  if (statusFilter && statusFilter !== "All") {
+    query.append("status", statusFilter.toLowerCase()); // Sends 'active' or 'inactive'
+  }
+  if (courseId && courseId.trim() !== "") {
+    query.append("course_id", courseId);
+  }
+  
+  if (query.toString()) {
+    url = `${BASE_URL}?${query.toString()}`;
+  }
 
-    const response = await fetch(url, { headers: getAuthHeaders() });
-    const result = await handleResponse(response);
-    
-    // Map backend response to Student interface
-    if (result.data && Array.isArray(result.data)) {
-      return {
-        ...result,
-        data: result.data.map(mapStudent)
-      };
-    }
-    
-    return Array.isArray(result) ? result.map(mapStudent) : result;
+  const response = await fetch(url, { headers: getAuthHeaders() });
+  const result = await handleResponse(response);
+  
+  // Map backend response to Student interface
+  if (result.data && Array.isArray(result.data)) {
+    return {
+      ...result,
+      data: result.data.map(mapStudent)
+    };
+  }
+  
+  return Array.isArray(result) ? result.map(mapStudent) : result;
 }
 
 /**

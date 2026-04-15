@@ -19,8 +19,9 @@ export async function GET(
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
-    console.error(`GET User proxy error [${BACKEND_URL}/${id}]:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`GET User proxy error [${BACKEND_URL}/${id}]:`, message);
     return NextResponse.json(
       { message: `Failed to connect to backend at ${BACKEND_URL}/${id}.` },
       { status: 502 }
@@ -47,8 +48,9 @@ export async function PUT(
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
-    console.error(`PUT User proxy error [${BACKEND_URL}/${id}]:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`PUT User proxy error [${BACKEND_URL}/${id}]:`, message);
     return NextResponse.json(
       { message: `Failed to connect to backend at ${BACKEND_URL}/${id}.` },
       { status: 502 }
@@ -75,8 +77,9 @@ export async function DELETE(
     
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
-    console.error(`DELETE User proxy error [${BACKEND_URL}/${id}]:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`DELETE User proxy error [${BACKEND_URL}/${id}]:`, message);
     return NextResponse.json(
       { message: `Failed to connect to backend at ${BACKEND_URL}/${id}.` },
       { status: 502 }

@@ -31,7 +31,7 @@ export default function UsersPage() {
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserData | null>(null);
-  const [deleteUser, setDeleteUser] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Institution Representative", institution: "" });
@@ -50,7 +50,7 @@ export default function UsersPage() {
       if (Array.isArray(data)) {
         setInstitutions(data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error loading institutions:", error);
     }
   };
@@ -71,7 +71,7 @@ export default function UsersPage() {
         }));
         setUsers(mappedUsers);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error loading users:", error);
     } finally {
       setIsFetching(false);
@@ -122,8 +122,9 @@ export default function UsersPage() {
         setIsCreateModalOpen(false);
         loadUsers(); // Refresh the list
         alert("User created successfully!");
-      } catch (error: any) {
-        alert(error.message || "Failed to create user");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to create user";
+        alert(message);
       } finally {
         setIsLoading(false);
       }
@@ -144,8 +145,9 @@ export default function UsersPage() {
         setEditUser(null);
         loadUsers(); // Refresh the list
         alert("User updated successfully!");
-      } catch (error: any) {
-        alert(error.message || "Failed to update user");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to update user";
+        alert(message);
       } finally {
         setIsLoading(false);
       }
@@ -153,15 +155,16 @@ export default function UsersPage() {
   };
 
   const handleDeleteSubmit = async () => {
-    if (deleteUser) {
+    if (userToDelete) {
       setIsLoading(true);
       try {
-        await deleteUser(deleteUser.id);
-        setDeleteUser(null);
+        await deleteUser(userToDelete.id);
+        setUserToDelete(null);
         loadUsers(); // Refresh the list
         alert("User deleted successfully!");
-      } catch (error: any) {
-        alert(error.message || "Failed to delete user");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to delete user";
+        alert(message);
       } finally {
         setIsLoading(false);
       }
@@ -386,7 +389,7 @@ export default function UsersPage() {
                                 <Pencil size={14} className="text-gray-500" /> Edit
                               </button>
                               <button
-                                onClick={() => { setDeleteUser(u); setOpenMenu(null); }}
+                                onClick={() => { setUserToDelete(u); setOpenMenu(null); }}
                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                               >
                                 <Trash2 size={14} className="text-red-500" /> Delete
@@ -658,20 +661,20 @@ export default function UsersPage() {
       )}
 
       {/* CONFIRM DELETE MODAL */}
-      {deleteUser && (
+      {userToDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 pb-4">
               <h2 className="text-xl font-bold text-gray-900">Confirm Delete</h2>
-              <button onClick={() => setDeleteUser(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setUserToDelete(null)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 pt-0">
-              <p className="text-sm text-gray-600">Are you sure you want to delete user {deleteUser.name}?</p>
+              <p className="text-sm text-gray-600">Are you sure you want to delete user {userToDelete.name}?</p>
             </div>
             <div className="flex justify-center gap-3 p-6 pt-0">
-              <button onClick={() => setDeleteUser(null)} className="px-6 py-2 border border-gray-200 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+              <button onClick={() => setUserToDelete(null)} className="px-6 py-2 border border-gray-200 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                 Cancel
               </button>
               <button onClick={handleDeleteSubmit} className="px-6 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm transition-colors flex items-center gap-2">

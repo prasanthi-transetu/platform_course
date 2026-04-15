@@ -55,15 +55,16 @@ export default function StudentsPage() {
         setActiveStudentsCount(activeCount)
         setError(null)
         setIsRateLimited(false)
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
         console.error("Error fetching student data:", err)
         
         // Handle Rate Limiting (429) specifically
-        if (err.message?.includes("429") || err.message?.includes("Too many requests")) {
+        if (message.includes("429") || message.includes("Too many requests")) {
           setIsRateLimited(true)
           setError("Too many requests from this IP. Please wait 15 minutes before refreshing.")
         } else {
-          setError(err.message || "Failed to load students. Please ensure your backend is running.")
+          setError(message || "Failed to load students. Please ensure your backend is running.")
         }
       } finally {
         setLoading(false)

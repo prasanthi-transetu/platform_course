@@ -37,9 +37,10 @@ export default function LoginPage() {
       // Use full page navigation so the server-side middleware
       // picks up the newly set cookie on the next request.
       window.location.href = "/admin/dashboard";
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login Error:", error);
-      alert(error.message || "Access Denied: Unrecognized role or invalid credentials.");
+      const message = error instanceof Error ? error.message : "Access Denied: Unrecognized role or invalid credentials.";
+      alert(message);
       setIsLoading(false);
     }
   };
