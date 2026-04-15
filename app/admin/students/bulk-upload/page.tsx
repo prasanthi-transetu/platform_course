@@ -67,8 +67,22 @@ Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2`
       setIsUploading(true)
       setError("")
       
-      const result = await bulkUploadStudents(file)
+      // Read and clean the CSV file before uploading
+      const text = await file.text()
+      const lines = text.split("\n")
+      const cleanedLines = lines
+        .map(line => line.split(",").map(cell => cell.trim()).join(","))
+        .filter(line => line.length > 0)
       
+      const cleanedContent = cleanedLines.join("\n")
+      const cleanedFile = new File([cleanedContent], file.name, { type: "text/csv" })
+
+      const result = await bulkUploadStudents(cleanedFile)
+      
+      if (result.data?.success_count === 0 && result.data?.failed_count === 0) {
+        throw new Error("No students were found in the file. Please check your CSV format and ensure headers are correct.")
+      }
+
       // Success - Trigger a refresh before redirecting
       setUploadSuccess(true)
       setUploadStats({

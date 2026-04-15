@@ -46,30 +46,30 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full animate-in fade-in slide-in-from-right-8 duration-1000">
         {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">
+        <div className="mb-12">
+          <h2 className="text-[32px] font-[900] text-slate-900 mb-2.5 tracking-tight leading-tight">
             Welcome to LMS Portal
           </h2>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-[15px] font-semibold tracking-wide">
             Please enter your details to sign in to your account.
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-7">
           {/* Email Check */}
-          <div className="space-y-1.5">
+          <div className="space-y-2.5">
             <label
               htmlFor="email"
-              className="text-xs font-semibold text-slate-700 block"
+              className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.12em] block ml-1 opacity-80"
             >
               Email Address
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Mail className="h-4 w-4" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-blue-500 transition-colors">
+                <Mail size={20} strokeWidth={2.5} />
               </div>
               <input
                 id="email"
@@ -78,30 +78,30 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full text-slate-900 pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                className="w-full text-slate-900 pl-14 pr-5 py-4.5 bg-slate-50/40 border border-slate-100 rounded-[20px] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all text-[15px] font-semibold placeholder:text-slate-200"
               />
             </div>
           </div>
 
           {/* Password Check */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1.5">
               <label
                 htmlFor="password"
-                className="text-xs font-semibold text-slate-700 block"
+                className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.12em] block opacity-80"
               >
                 Password
               </label>
               <Link
                 href="/forgot-password"
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                className="text-[12px] font-extrabold text-blue-600 hover:text-blue-700 transition-colors tracking-wider"
               >
                 Forgot Password?
               </Link>
             </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Lock className="h-4 w-4" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-blue-500 transition-colors">
+                <Lock size={20} strokeWidth={2.5} />
               </div>
               <input
                 id="password"
@@ -110,32 +110,34 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full text-slate-900 pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm tracking-wide"
+                className="w-full text-slate-900 pl-14 pr-14 py-4.5 bg-slate-50/40 border border-slate-100 rounded-[20px] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all text-[15px] font-semibold placeholder:text-slate-200 tracking-widest"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-300 hover:text-slate-500 transition-colors"
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff size={20} strokeWidth={2.5} />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye size={20} strokeWidth={2.5} />
                 )}
               </button>
             </div>
           </div>
 
           {/* Remember Me */}
-          <div className="flex items-center">
-            <input
-              id="remember"
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors"
-            />
+          <div className="flex items-center px-1.5">
+            <div className="relative flex items-center">
+              <input
+                id="remember"
+                type="checkbox"
+                className="h-5 w-5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer accent-blue-600"
+              />
+            </div>
             <label
               htmlFor="remember"
-              className="ml-2 block text-xs text-slate-600 font-medium"
+              className="ml-3.5 block text-[14px] text-slate-500 font-bold cursor-pointer"
             >
               Remember me
             </label>
@@ -145,17 +147,22 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+            className="w-full flex justify-center items-center py-5 px-6 border border-transparent rounded-[20px] shadow-[0_12px_24px_-4px_rgba(37,99,235,0.24)] text-[16px] font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
           >
-            {isLoading ? "Signing in..." : "Login"}
+            {isLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Signing in...</span>
+              </div>
+            ) : "Login"}
           </button>
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-xs">
-          <p className="text-slate-500">
+        <div className="mt-12 text-center">
+          <p className="text-[14px] text-slate-400 font-semibold">
             Don&apos;t have an account?{" "}
-            <a href="#" className="font-semibold text-blue-600 hover:text-blue-700">
+            <a href="#" className="font-extrabold text-blue-600 hover:text-blue-700 transition-colors">
               Contact your administrator
             </a>
           </p>
