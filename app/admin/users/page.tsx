@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
-import { createUser, fetchUsers } from "@/features/users/api";
+import { createUser, fetchUsers, deleteUser, updateUser } from "@/features/users/api";
 import { fetchInstitutions, Institution } from "@/features/institutions/api";
 
 interface UserData {
@@ -130,16 +130,42 @@ export default function UsersPage() {
     }
   };
 
-  const handleEditSubmit = () => {
-    if (handleValidation(true)) {
-      setEditUser(null);
-      alert("User updated successfully!");
+  const handleEditSubmit = async () => {
+    if (handleValidation(true) && editUser) {
+      setIsLoading(true);
+      try {
+        await updateUser(editUser.id, {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password || undefined,
+          role: formData.role,
+          institution: formData.institution
+        });
+        setEditUser(null);
+        loadUsers(); // Refresh the list
+        alert("User updated successfully!");
+      } catch (error: any) {
+        alert(error.message || "Failed to update user");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleDeleteSubmit = () => {
-    setDeleteUser(null);
-    alert("User deleted successfully!");
+  const handleDeleteSubmit = async () => {
+    if (deleteUser) {
+      setIsLoading(true);
+      try {
+        await deleteUser(deleteUser.id);
+        setDeleteUser(null);
+        loadUsers(); // Refresh the list
+        alert("User deleted successfully!");
+      } catch (error: any) {
+        alert(error.message || "Failed to delete user");
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const roles = ["All Roles", "Admin", "Institution Representative", "Tutor"];

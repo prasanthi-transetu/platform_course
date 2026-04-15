@@ -1,6 +1,5 @@
-// Users API - fetches directly from backend
-const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
-const BASE_URL = `${API_HOST}/api/v1/users`;
+// Users API - fetches from internal proxy routes
+const BASE_URL = "/api/v1/users";
 
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -61,6 +60,51 @@ export async function createUser(userData: { name: string; email: string; passwo
     return await response.json();
   } catch (err: any) {
     console.error("Create user failed:", err);
+    throw err;
+  }
+}
+
+/**
+ * Update an existing user
+ */
+export async function updateUser(id: string | number, userData: Partial<User> & { password?: string }) {
+  try {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update user");
+    }
+
+    return await response.json();
+  } catch (err: any) {
+    console.error("Update user failed:", err);
+    throw err;
+  }
+}
+
+/**
+ * Delete a user
+ */
+export async function deleteUser(id: string | number) {
+  try {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok && response.status !== 204) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete user");
+    }
+
+    return true;
+  } catch (err: any) {
+    console.error("Delete user failed:", err);
     throw err;
   }
 }
