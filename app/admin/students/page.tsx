@@ -34,19 +34,29 @@ export default function StudentsPage() {
   }, [search])
 
   useEffect(() => {
-    const loadStudents = async () => {
+    const loadStats = async () => {
       try {
-        setLoading(true)
-        const [studentsData, count, activeCount] = await Promise.all([
-          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
+        const [count, activeCount] = await Promise.all([
           fetchStudentCount(),
           fetchActiveStudentCount()
         ])
+        setApiTotalStudents(count)
+        setActiveStudentsCount(activeCount)
+      } catch (err) {
+        console.error("Error fetching stats:", err)
+      }
+    }
+    loadStats()
+  }, [refreshTrigger])
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        setLoading(true)
+        const studentsData = await fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter)
         
         setStudents(studentsData.students)
         setApiTotalPages(studentsData.totalPages)
-        setApiTotalStudents(count || studentsData.total)
-        setActiveStudentsCount(activeCount)
         setError(null)
       } catch (err: any) {
         console.error("Error fetching students:", err)
@@ -60,6 +70,14 @@ export default function StudentsPage() {
   }, [currentPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger])
 
   const triggerRefresh = () => setRefreshTrigger(prev => prev + 1)
+
+  // Refresh every 60 seconds to keep stats updated without overloading
+  useEffect(() => {
+    const interval = setInterval(() => {
+      triggerRefresh()
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
