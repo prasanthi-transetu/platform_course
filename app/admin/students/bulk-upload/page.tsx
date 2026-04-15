@@ -69,6 +69,7 @@ Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2`
       
       const result = await bulkUploadStudents(file)
       
+      // Success - Trigger a refresh before redirecting
       setUploadSuccess(true)
       setUploadStats({
         success: result.data?.success_count || 0,
@@ -80,10 +81,11 @@ Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2`
       setFileName("")
       if (fileInputRef.current) fileInputRef.current.value = ""
 
-      // Optional: Redirect after a delay
+      // Redirect after a short delay
       setTimeout(() => {
+        router.refresh() // Trigger Next.js data refresh
         router.push("/admin/students")
-      }, 3000)
+      }, 2000)
 
     } catch (err: any) {
       console.error("Bulk upload error:", err)

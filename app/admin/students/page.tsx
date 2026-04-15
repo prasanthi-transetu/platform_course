@@ -20,6 +20,7 @@ export default function StudentsPage() {
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | number | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +57,15 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [currentPage, debouncedSearch, statusFilter, courseFilter, isModalOpen])
+  }, [currentPage, debouncedSearch, statusFilter, courseFilter, isModalOpen, refreshTrigger])
+
+  // Refresh every 3 seconds to catch background uploads
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
