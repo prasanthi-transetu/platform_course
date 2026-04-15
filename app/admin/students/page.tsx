@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { fetchStudents } from "@/features/students/api"
+import { fetchStudents, fetchStudentCount } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
@@ -35,10 +35,14 @@ export default function StudentsPage() {
     const loadStudents = async () => {
       try {
         setLoading(true)
-        const data = await fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter)
-        setStudents(data.students)
-        setApiTotalPages(data.totalPages)
-        setApiTotalStudents(data.total)
+        const [studentsData, count] = await Promise.all([
+          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
+          fetchStudentCount()
+        ])
+        
+        setStudents(studentsData.students)
+        setApiTotalPages(studentsData.totalPages)
+        setApiTotalStudents(count || studentsData.total) // Use count API if available
         setError(null)
       } catch (err: any) {
         console.error("Error fetching students:", err)

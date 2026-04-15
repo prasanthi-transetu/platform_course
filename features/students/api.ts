@@ -130,6 +130,19 @@ export async function fetchStudent(id: string | number) {
   const student = result.data || result;
   return mapStudent(student);
 }
+
+/**
+ * Fetch total students count
+ */
+export async function fetchStudentCount() {
+  const response = await fetch(`${BASE_URL}/count`, { headers: getAuthHeaders() });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch student count");
+  }
+  const result = await response.json();
+  return result.data?.total_students || 0;
+}
 export async function createStudent(data: any) {
   const payload = {
     first_name: data.first_name,
