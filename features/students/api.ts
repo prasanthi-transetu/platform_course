@@ -14,6 +14,22 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const message = err.message || err.detail || "API request failed";
+    
+    if (message.toLowerCase().includes("token expired") || response.status === 401) {
+      if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        window.location.href = "/login";
+      }
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 export interface Student {
   id: string | number;
   first_name: string;
@@ -95,26 +111,17 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
     }
 
     const response = await fetch(url, { headers: getAuthHeaders() });
-    if (!response.ok) {
-      throw new Error("Backend returned " + response.status);
+    const result = await handleResponse(response);
+    
+    // Map backend response to Student interface
+    if (result.data && Array.isArray(result.data)) {
+      return {
+        ...result,
+        data: result.data.map(mapStudent)
+      };
     }
-    const result = await response.json();
-    const students = result.data?.students || result.data || result; // Backend returning paginated format or array
-    const mapped = Array.isArray(students) ? students.map(mapStudent) : [];
-
-    // Optional pagination metadata
-    const total = result.pagination?.total || result.total || result.data?.total || result.total_count || mapped.length;
-    const totalPages = result.pagination?.totalPages || result.pagination?.total_pages || result.total_pages || result.data?.total_pages || Math.ceil(total / limit) || 1;
-
-    return {
-      students: mapped,
-      total: total,
-      totalPages: totalPages
-    };
-  } catch (err: any) {
-    console.error("Backend fetch failed:", err);
-    throw err;
-  }
+    
+    return Array.isArray(result) ? result.map(mapStudent) : result;
 }
 
 /**
@@ -122,11 +129,7 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
  */
 export async function fetchStudent(id: string | number) {
   const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch student details");
-  }
-  const result = await response.json();
+  const result = await handleResponse(response);
   const student = result.data || result;
   return mapStudent(student);
 }
@@ -136,11 +139,7 @@ export async function fetchStudent(id: string | number) {
  */
 export async function fetchStudentCount() {
   const response = await fetch(`${BASE_URL}/count`, { headers: getAuthHeaders() });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch student count");
-  }
-  const result = await response.json();
+  const result = await handleResponse(response);
   return result.data?.total_students || 0;
 }
 
@@ -149,13 +148,10 @@ export async function fetchStudentCount() {
  */
 export async function fetchActiveStudentCount() {
   const response = await fetch(`${BASE_URL}/active-count`, { headers: getAuthHeaders() });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch active student count");
-  }
-  const result = await response.json();
+  const result = await handleResponse(response);
   return result.data?.active_students || 0;
 }
+
 export async function createStudent(data: any) {
   const payload = {
     first_name: data.first_name,
@@ -166,24 +162,12 @@ export async function createStudent(data: any) {
     notes: data.notes,
   };
 
-  try {
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-    
-    if (!response.ok || (result && result.success === false)) {
-      throw new Error(result.message || result.error || "Failed to create student on backend");
-    }
-
-    return result;
-  } catch (err: any) {
-    console.error("Backend unreachable or rejected student creation:", err.message);
-    throw err;
-  }
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
 }
 
 /**
@@ -207,21 +191,13 @@ export async function updateStudent(id: string | number, data: any) {
   // Remove undefined fields to prevent backend rejection
   Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
-  // Remove undefined fields
-  Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to update student");
-  }
-
-  return response.json();
+  return handleResponse(response);
 }
 
 /**
@@ -233,9 +209,8 @@ export async function deleteStudent(id: string | number) {
     headers: getAuthHeaders()
   });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to delete student");
+  if (!response.ok && response.status !== 204) {
+    return handleResponse(response);
   }
 }
 

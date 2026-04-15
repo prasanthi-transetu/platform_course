@@ -14,6 +14,22 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const message = err.message || err.detail || "API request failed";
+    
+    if (message.toLowerCase().includes("token expired") || response.status === 401) {
+      if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        window.location.href = "/login";
+      }
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 export interface User {
   id: string | number;
   name: string;
@@ -28,83 +44,45 @@ export interface User {
  * Fetch all users
  */
 export async function fetchUsers() {
-  try {
-    const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
-    if (!response.ok) {
-      throw new Error("Backend returned " + response.status);
-    }
-    const result = await response.json();
-    return result.data || result;
-  } catch (err: any) {
-    console.error("Backend fetch failed:", err);
-    throw err;
-  }
+  const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
+  const result = await handleResponse(response);
+  return result.data || result;
 }
 
 /**
  * Create a new user
  */
 export async function createUser(userData: { name: string; email: string; password?: string; role: string; institution?: string }) {
-  try {
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to create user");
-    }
-
-    return await response.json();
-  } catch (err: any) {
-    console.error("Create user failed:", err);
-    throw err;
-  }
+  const response = await fetch(BASE_URL, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(userData),
+  });
+  return handleResponse(response);
 }
 
 /**
  * Update an existing user
  */
 export async function updateUser(id: string | number, userData: Partial<User> & { password?: string }) {
-  try {
-    const response = await fetch(`${BASE_URL}/${id}`, {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(userData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to update user");
-    }
-
-    return await response.json();
-  } catch (err: any) {
-    console.error("Update user failed:", err);
-    throw err;
-  }
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(userData),
+  });
+  return handleResponse(response);
 }
 
 /**
  * Delete a user
  */
 export async function deleteUser(id: string | number) {
-  try {
-    const response = await fetch(`${BASE_URL}/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok && response.status !== 204) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to delete user");
-    }
-
-    return true;
-  } catch (err: any) {
-    console.error("Delete user failed:", err);
-    throw err;
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok && response.status !== 204) {
+    return handleResponse(response);
   }
+  return true;
 }
