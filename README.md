@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LMS Admin Dashboard - Frontend
 
-## Getting Started
+A professional, responsive Learning Management System (LMS) Admin Dashboard built with Next.js 15, TypeScript, and Tailwind CSS. This frontend is fully integrated with a Node.js/Sequelize backend to manage users, students, institutions, and more.
 
-First, run the development server:
+## 🚀 Project Overview
 
+This platform provides a centralized hub for administrators to oversee educational operations. It features a modern, clean UI for managing students, user accounts, and institutions with real-time data synchronization and robust error handling.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management & Data Fetching**: [TanStack Query (React Query)](https://tanstack.com/query/latest)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Validation**: Custom validation logic in `lib/validation.ts`
+
+## ⚙️ Setup and Installation
+
+### Prerequisites
+- Node.js (v18 or higher recommended)
+- npm, yarn, or pnpm
+
+### Steps
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/prasanthi-transetu/platform_course.git
+   cd platform_course
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Environment Variables**:
+   Create a `.env.local` file in the root directory and add your backend URL:
+   ```env
+   NEXT_PUBLIC_API_URL=https://lms-backend-n83k.onrender.com
+   ```
+
+## 🏃 Running the Project Locally
+
+To start the development server:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
-
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔗 Backend Integration Details
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Base API URL**: `https://lms-backend-n83k.onrender.com/api/v1`
+- **Authentication**: Uses Bearer Token authentication. The frontend extracts the `token` from cookies and forwards it in the `Authorization` header.
+- **Data Fetching Strategy**: 
+    - **TanStack Query** is used for student operations to provide automatic caching, background updates, and seamless state management.
+    - **Native Fetch API** is used within Next.js API proxy routes to securely communicate with the backend.
 
-## Learn More
+## ✨ Implemented Features (CRUD)
 
-To learn more about Next.js, take a look at the following resources:
+### 👥 Student Management
+- **Read**: View paginated list of students with search and filters (Status, Course ID).
+- **Create**: Add new students via a multi-step modal.
+- **Update**: Edit existing student details and enrollment status.
+- **Delete**: Securely remove student records with confirmation.
+- **Bulk Upload**: Import multiple students at once using CSV files.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 👤 User Management
+- **Read**: Oversee administrators and institution representatives.
+- **Create**: Register new administrative users with specific roles.
+- **Real-time Mapping**: Automatically maps backend `full_name` and `email` for display.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 🏫 Institution Management
+- **Read/Write**: Manage educational units and their contact information.
+- **Authenticated Proxy**: Securely forwards credentials to the backend via Next.js routes.
 
-## Deploy on Vercel
+## 📂 Folder Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+├── app/                  # Next.js App Router (Pages and API Routes)
+│   ├── admin/            # Administrative pages (Dashboard, Students, Users)
+│   ├── api/              # Local API proxy routes for backend communication
+│   └── login/            # Authentication pages
+├── components/           # Reusable UI components
+│   ├── layouts/          # Layout wrappers
+│   ├── providers/        # Context providers (e.g., QueryProvider)
+│   └── sidebar/          # Navigation and modal components
+├── features/             # Domain-specific logic and API helpers
+│   ├── students/         # Student API hooks and functions
+│   ├── users/            # User API functions
+│   └── institutions/     # Institution API functions
+├── lib/                  # Shared utilities and validation logic
+├── public/               # Static assets (images, icons)
+└── styles/               # Global CSS and Tailwind configurations
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚠️ Important Notes
+
+- **CORS**: Cross-Origin Resource Sharing is handled entirely on the **Backend**. No additional configuration is required on the frontend.
+- **Authorization**: Always ensure you are logged in to access administrative routes. The `middleware.ts` handles route protection.
+- **Backend Availability**: The frontend depends on the deployed backend URL. If the backend is down, some features may display error messages.
+
+---
+Developed by [Prasanthi Transetu](https://github.com/prasanthi-transetu)
