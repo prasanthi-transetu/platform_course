@@ -142,7 +142,7 @@ export default function UsersPage() {
     alert("User deleted successfully!");
   };
 
-  const roles = ["All Roles", "Admin", "Institution Rep", "Tutor"];
+  const roles = ["All Roles", "Admin", "Institution Representative", "Tutor"];
   const currentData = users; // Use real data from API
 
   const filtered = currentData.filter((u) => {
@@ -150,7 +150,10 @@ export default function UsersPage() {
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === "All Roles" || u.role === roleFilter;
+    
+    // Handle both short and long forms of the role for filtering
+    const normalizedUserRole = u.role === "Institution Rep" ? "Institution Representative" : u.role;
+    const matchesRole = roleFilter === "All Roles" || normalizedUserRole === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -279,7 +282,12 @@ export default function UsersPage() {
         </div>
 
         {/* TABLE */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[300px] relative">
+          {isFetching && (
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 backdrop-blur-[1px]">
+               <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          )}
           <table className="w-full text-sm text-left">
             <thead className="text-gray-500 font-medium border-b border-gray-100">
               <tr>
