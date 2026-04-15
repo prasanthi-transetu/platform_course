@@ -34,39 +34,35 @@ export default function StudentsPage() {
   }, [search])
 
   useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const [count, activeCount] = await Promise.all([
-          fetchStudentCount(),
-          fetchActiveStudentCount()
-        ])
-        setApiTotalStudents(count)
-        setActiveStudentsCount(activeCount)
-      } catch (err) {
-        console.error("Error fetching stats:", err)
-      }
-    }
-    loadStats()
-  }, [refreshTrigger])
-
-  useEffect(() => {
-    const loadStudents = async () => {
+    const loadData = async () => {
       try {
         setLoading(true)
-        const studentsData = await fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter)
+        
+        // Fetch list and stats in parallel to reduce total wait time
+        const [studentsData, activeCount] = await Promise.all([
+          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
+          fetchActiveStudentCount()
+        ])
         
         setStudents(studentsData.students)
         setApiTotalPages(studentsData.totalPages)
+        setApiTotalStudents(studentsData.total)
+        setActiveStudentsCount(activeCount)
         setError(null)
       } catch (err: any) {
-        console.error("Error fetching students:", err)
+        console.error("Error fetching student data:", err)
         setError(err.message || "Failed to load students. Please ensure your backend is running.")
+        
+        // If we hit a rate limit, stop the loading spinner but keep the error visible
+        if (err.message?.includes("429") || err.message?.includes("Too many requests")) {
+          setError("Too many requests from this IP, please try again after 15 minutes")
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    loadStudents()
+    loadData()
   }, [currentPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger])
 
   const triggerRefresh = () => setRefreshTrigger(prev => prev + 1)
