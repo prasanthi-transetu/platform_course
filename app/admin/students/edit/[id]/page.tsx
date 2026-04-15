@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { X, Eye, EyeOff } from "lucide-react";
-import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api";
+import { useStudent, useUpdateStudent } from "@/features/students/api";
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -20,37 +20,28 @@ export default function EditStudentPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { data: student, isLoading, error: queryError } = useStudent(studentId);
+  const { mutateAsync: updateStudent, isPending: isUpdating } = useUpdateStudent();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadStudent = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await fetchStudent(studentId);
-
-        setFormData({
-          firstName: data.first_name || "",
-          lastName: data.last_name || "",
-          email: data.email || "",
-          mobile: data.mobile_number || "",
-          password: "",
-          notes: data.notes || "",
-        });
-      } catch (err: any) {
-        console.error("Error fetching student:", err);
-        setError(err.message || "Failed to load student data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (studentId) {
-      loadStudent();
+    if (student) {
+      setFormData({
+        firstName: student.first_name || "",
+        lastName: student.last_name || "",
+        email: student.email || "",
+        mobile: student.mobile_number || "",
+        password: "",
+        notes: student.notes || "",
+      });
     }
-  }, [studentId]);
+  }, [student]);
+
+  useEffect(() => {
+    if (queryError) {
+      setError((queryError as any).message || "Failed to load student data");
+    }
+  }, [queryError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,23 +49,19 @@ export default function EditStudentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUpdating(true);
     setError(null);
 
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.mobile) {
       setError("Please fill in all required fields.");
-      setIsUpdating(false);
       return;
     }
 
     try {
-      await updateStudentApi(studentId, formData);
+      await updateStudent({ id: studentId, data: formData });
       router.push("/admin/students");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong updating the student");
-    } finally {
-      setIsUpdating(false);
     }
   };
 

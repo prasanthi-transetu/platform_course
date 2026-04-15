@@ -2,31 +2,22 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { fetchStudents, fetchStudentCount, fetchActiveStudentCount } from "@/features/students/api"
+import { useStudents, useStudentCounts } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [courseFilter, setCourseFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [apiTotalPages, setApiTotalPages] = useState(1)
-  const [apiTotalStudents, setApiTotalStudents] = useState(0)
-  const [activeStudentsCount, setActiveStudentsCount] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
+  
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | number | null>(null)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
-
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [itemsPerPage, setItemsPerPage] = useState(50)
-
-  const [isRateLimited, setIsRateLimited] = useState(false)
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -35,53 +26,26 @@ export default function StudentsPage() {
     return () => clearTimeout(timeoutId)
   }, [search])
 
-  useEffect(() => {
-    // If already rate limited, don't try again automatically
-    if (isRateLimited) return
+  // TanStack Query Hooks
+  const { 
+    data: studentsData, 
+    isLoading: loading, 
+    error: queryError 
+  } = useStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter);
 
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        
-        // Fetch list and active count in parallel
-        const [studentsData, activeCount] = await Promise.all([
-          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
-          fetchActiveStudentCount()
-        ])
-        
-        setStudents(studentsData.students)
-        setApiTotalPages(studentsData.totalPages)
-        setApiTotalStudents(studentsData.total)
-        setActiveStudentsCount(activeCount)
-        setError(null)
-        setIsRateLimited(false)
-      } catch (err: any) {
-        console.error("Error fetching student data:", err)
-        
-        // Handle Rate Limiting (429) specifically
-        if (err.message?.includes("429") || err.message?.includes("Too many requests")) {
-          setIsRateLimited(true)
-          setError("Too many requests from this IP. Please wait 15 minutes before refreshing.")
-        } else {
-          setError(err.message || "Failed to load students. Please ensure your backend is running.")
-        }
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { 
+    data: countsData,
+    isLoading: countsLoading
+  } = useStudentCounts();
 
-    loadData()
-  }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger, isRateLimited])
-
-  const triggerRefresh = () => {
-    setIsRateLimited(false) // Allow retrying on manual refresh
-    setRefreshTrigger(prev => prev + 1)
-  }
+  const students = studentsData?.students || []
+  const apiTotalPages = studentsData?.totalPages || 1
+  const apiTotalStudents = countsData?.total || 0
+  const activeStudentsCount = countsData?.active || 0
+  const error = queryError ? (queryError as any).message : null
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedStudents = students; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 
@@ -212,14 +176,14 @@ export default function StudentsPage() {
                     {error}
                   </td>
                 </tr>
-              ) : paginatedStudents.length === 0 ? (
+              ) : students.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No students found.
                   </td>
                 </tr>
               ) : (
-                paginatedStudents.map((student, index) => (
+                students.map((student, index) => (
                   <tr key={student.id} className="hover:bg-gray-50/50 transition-colors bg-white">
                     <td className="px-6 py-4 text-gray-500 text-sm font-medium">
                       {student.id}

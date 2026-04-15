@@ -1,3 +1,5 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 // Students API - fetches directly from backend to avoid server-to-localhost proxy issues on Vercel
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BASE_URL = `${API_HOST}/api/v1/students`;
@@ -222,6 +224,83 @@ export async function updateStudent(id: string | number, data: any) {
   }
 
   return response.json();
+}
+
+/**
+ * TanStack Query Hooks
+ */
+
+export function useStudents(page: number = 1, limit: number = 50, search?: string, statusFilter?: string, courseId?: string) {
+  return useQuery({
+    queryKey: ["students", { page, limit, search, statusFilter, courseId }],
+    queryFn: () => fetchStudents(page, limit, search, statusFilter, courseId),
+  });
+}
+
+export function useStudent(id: string | number) {
+  return useQuery({
+    queryKey: ["student", id],
+    queryFn: () => fetchStudent(id),
+    enabled: !!id,
+  });
+}
+
+export function useStudentCounts() {
+  return useQuery({
+    queryKey: ["studentCounts"],
+    queryFn: async () => {
+      const [total, active] = await Promise.all([
+        fetchStudentCount(),
+        fetchActiveStudentCount(),
+      ]);
+      return { total, active };
+    },
+  });
+}
+
+export function useCreateStudent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createStudent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["studentCounts"] });
+    },
+  });
+}
+
+export function useUpdateStudent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string | number; data: any }) => updateStudent(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["studentCounts"] });
+    },
+  });
+}
+
+export function useDeleteStudent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteStudent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["studentCounts"] });
+    },
+  });
+}
+
+export function useBulkUploadStudents() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkUploadStudents,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["studentCounts"] });
+    },
+  });
 }
 
 /**

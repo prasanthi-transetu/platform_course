@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
-import { createStudent } from "@/features/students/api";
+import { useCreateStudent } from "@/features/students/api";
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutateAsync: createStudent, isPending: isSubmitting } = useCreateStudent();
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -32,13 +32,11 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
 
     // Basic Validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.mobile || !formData.password) {
       setError("Please fill in all required fields.");
-      setIsSubmitting(false);
       return;
     }
 
@@ -58,8 +56,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong creating the student");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
