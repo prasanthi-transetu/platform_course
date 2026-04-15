@@ -8,9 +8,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const authHeader = request.headers.get("Authorization");
+  
   try {
     const response = await fetch(`${BACKEND_URL}/${id}`, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
@@ -28,11 +33,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const authHeader = request.headers.get("Authorization");
+  
   try {
     const body = await request.json();
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
       body: JSON.stringify(body),
     });
     const data = await response.json();
@@ -51,9 +61,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const authHeader = request.headers.get("Authorization");
+  
   try {
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
+      headers: authHeader ? { "Authorization": authHeader } : {},
     });
     
     if (response.status === 204) {
