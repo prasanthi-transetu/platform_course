@@ -57,15 +57,9 @@ export default function StudentsPage() {
     }
 
     loadStudents()
-  }, [currentPage, debouncedSearch, statusFilter, courseFilter, isModalOpen, refreshTrigger])
+  }, [currentPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger])
 
-  // Refresh every 3 seconds to catch background uploads
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRefreshTrigger(prev => prev + 1)
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
+  const triggerRefresh = () => setRefreshTrigger(prev => prev + 1)
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
@@ -316,14 +310,14 @@ export default function StudentsPage() {
       <AddStudentModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSuccess={() => { setIsModalOpen(false); setCurrentPage(1); }} 
+        onSuccess={() => { setIsModalOpen(false); triggerRefresh(); }} 
       />
 
       <EditStudentModal
         studentId={editingStudentId}
         isOpen={editingStudentId !== null}
         onClose={() => setEditingStudentId(null)}
-        onSuccess={() => { setEditingStudentId(null); setCurrentPage(1); }}
+        onSuccess={() => { setEditingStudentId(null); triggerRefresh(); }}
       />
     </div>
   )
