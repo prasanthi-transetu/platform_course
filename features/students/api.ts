@@ -143,6 +143,19 @@ export async function fetchStudentCount() {
   const result = await response.json();
   return result.data?.total_students || 0;
 }
+
+/**
+ * Fetch active students count
+ */
+export async function fetchActiveStudentCount() {
+  const response = await fetch(`${BASE_URL}/active-count`, { headers: getAuthHeaders() });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch active student count");
+  }
+  const result = await response.json();
+  return result.data?.active_students || 0;
+}
 export async function createStudent(data: any) {
   const payload = {
     first_name: data.first_name,

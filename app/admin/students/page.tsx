@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { fetchStudents, fetchStudentCount } from "@/features/students/api"
+import { fetchStudents, fetchStudentCount, fetchActiveStudentCount } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
@@ -16,6 +16,7 @@ export default function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [apiTotalPages, setApiTotalPages] = useState(1)
   const [apiTotalStudents, setApiTotalStudents] = useState(0)
+  const [activeStudentsCount, setActiveStudentsCount] = useState(0)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudentId, setEditingStudentId] = useState<string | number | null>(null)
@@ -35,14 +36,16 @@ export default function StudentsPage() {
     const loadStudents = async () => {
       try {
         setLoading(true)
-        const [studentsData, count] = await Promise.all([
+        const [studentsData, count, activeCount] = await Promise.all([
           fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
-          fetchStudentCount()
+          fetchStudentCount(),
+          fetchActiveStudentCount()
         ])
         
         setStudents(studentsData.students)
         setApiTotalPages(studentsData.totalPages)
-        setApiTotalStudents(count || studentsData.total) // Use count API if available
+        setApiTotalStudents(count || studentsData.total)
+        setActiveStudentsCount(activeCount)
         setError(null)
       } catch (err: any) {
         console.error("Error fetching students:", err)
@@ -104,7 +107,7 @@ export default function StudentsPage() {
             <UserCheck size={20} className="text-green-600" />
           </div>
           <p className="text-gray-500 text-sm font-medium mb-1">Active Students</p>
-          <h2 className="text-3xl font-bold text-gray-900">{students.filter(s => s.status?.toLowerCase() === "active").length}</h2>
+          <h2 className="text-3xl font-bold text-gray-900">{activeStudentsCount}</h2>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
           <div className="w-10 h-10 bg-purple-50 flex items-center justify-center rounded-lg mb-4">
