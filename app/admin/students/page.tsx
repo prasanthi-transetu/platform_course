@@ -26,6 +26,8 @@ export default function StudentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [itemsPerPage, setItemsPerPage] = useState(50)
 
+  const [isRateLimited, setIsRateLimited] = useState(false)
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setDebouncedSearch(search)
@@ -34,11 +36,14 @@ export default function StudentsPage() {
   }, [search])
 
   useEffect(() => {
+    // If already rate limited, don't try again automatically
+    if (isRateLimited) return
+
     const loadData = async () => {
       try {
         setLoading(true)
         
-        // Fetch list and stats in parallel to reduce total wait time
+        // Fetch list and active count in parallel
         const [studentsData, activeCount] = await Promise.all([
           fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
           fetchActiveStudentCount()
@@ -49,13 +54,16 @@ export default function StudentsPage() {
         setApiTotalStudents(studentsData.total)
         setActiveStudentsCount(activeCount)
         setError(null)
+        setIsRateLimited(false)
       } catch (err: any) {
         console.error("Error fetching student data:", err)
-        setError(err.message || "Failed to load students. Please ensure your backend is running.")
         
-        // If we hit a rate limit, stop the loading spinner but keep the error visible
+        // Handle Rate Limiting (429) specifically
         if (err.message?.includes("429") || err.message?.includes("Too many requests")) {
-          setError("Too many requests from this IP, please try again after 15 minutes")
+          setIsRateLimited(true)
+          setError("Too many requests from this IP. Please wait 15 minutes before refreshing.")
+        } else {
+          setError(err.message || "Failed to load students. Please ensure your backend is running.")
         }
       } finally {
         setLoading(false)
@@ -63,9 +71,12 @@ export default function StudentsPage() {
     }
 
     loadData()
-  }, [currentPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger])
+  }, [currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger, isRateLimited])
 
-  const triggerRefresh = () => setRefreshTrigger(prev => prev + 1)
+  const triggerRefresh = () => {
+    setIsRateLimited(false) // Allow retrying on manual refresh
+    setRefreshTrigger(prev => prev + 1)
+  }
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
