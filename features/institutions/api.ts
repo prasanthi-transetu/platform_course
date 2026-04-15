@@ -2,6 +2,19 @@
 
 const BASE_URL = "/api/v1/institutions";
 
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json"
+  };
+  if (typeof document !== "undefined") {
+    const match = document.cookie.match(/(^| )token=([^;]+)/);
+    if (match) {
+      headers["Authorization"] = `Bearer ${match[2]}`;
+    }
+  }
+  return headers;
+}
+
 export interface InstitutionContact {
   name: string;
   role: string;
@@ -36,7 +49,7 @@ export interface UpdateInstitutionPayload {
 
 // Fetch all institutions
 export async function fetchInstitutions(): Promise<Institution[]> {
-  const response = await fetch(BASE_URL);
+  const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.message || err.detail || "Failed to fetch institutions");
@@ -46,7 +59,7 @@ export async function fetchInstitutions(): Promise<Institution[]> {
 
 // Fetch a single institution by ID
 export async function fetchInstitutionById(id: string): Promise<Institution> {
-  const response = await fetch(`${BASE_URL}/${id}`);
+  const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.message || err.detail || "Failed to fetch institution");
@@ -58,7 +71,7 @@ export async function fetchInstitutionById(id: string): Promise<Institution> {
 export async function createInstitution(data: CreateInstitutionPayload): Promise<Institution> {
   const response = await fetch(BASE_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -72,7 +85,7 @@ export async function createInstitution(data: CreateInstitutionPayload): Promise
 export async function updateInstitution(id: string, data: UpdateInstitutionPayload): Promise<Institution> {
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -86,6 +99,7 @@ export async function updateInstitution(id: string, data: UpdateInstitutionPaylo
 export async function deleteInstitution(id: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
