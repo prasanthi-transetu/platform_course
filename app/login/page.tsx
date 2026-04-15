@@ -46,30 +46,30 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full animate-in fade-in slide-in-from-right-8 duration-1000">
+      <div className="w-full">
         {/* Header */}
-        <div className="mb-12">
-          <h2 className="text-[32px] font-[900] text-slate-900 mb-2.5 tracking-tight leading-tight">
+        <div className="mb-10">
+          <h2 className="text-[28px] font-bold text-slate-900 mb-2 tracking-tight">
             Welcome to LMS Portal
           </h2>
-          <p className="text-slate-400 text-[15px] font-semibold tracking-wide">
+          <p className="text-slate-400 text-[14px] font-medium">
             Please enter your details to sign in to your account.
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-7">
-          {/* Email Check */}
-          <div className="space-y-2.5">
+        <form onSubmit={handleLogin} className="space-y-6">
+          {/* Email */}
+          <div className="space-y-2">
             <label
               htmlFor="email"
-              className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.12em] block ml-1 opacity-80"
+              className="text-[13px] font-semibold text-slate-700 block"
             >
               Email Address
             </label>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-blue-500 transition-colors">
-                <Mail size={20} strokeWidth={2.5} />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Mail size={18} />
               </div>
               <input
                 id="email"
@@ -78,30 +78,30 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full text-slate-900 pl-14 pr-5 py-4.5 bg-slate-50/40 border border-slate-100 rounded-[20px] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all text-[15px] font-semibold placeholder:text-slate-200"
+                className="w-full text-slate-900 pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-[14px] placeholder:text-slate-300"
               />
             </div>
           </div>
 
-          {/* Password Check */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between px-1.5">
+          {/* Password */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <label
                 htmlFor="password"
-                className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.12em] block opacity-80"
+                className="text-[13px] font-semibold text-slate-700 block"
               >
                 Password
               </label>
               <Link
                 href="/forgot-password"
-                className="text-[12px] font-extrabold text-blue-600 hover:text-blue-700 transition-colors tracking-wider"
+                className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
               >
                 Forgot Password?
               </Link>
             </div>
             <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-blue-500 transition-colors">
-                <Lock size={20} strokeWidth={2.5} />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Lock size={18} />
               </div>
               <input
                 id="password"
@@ -110,34 +110,32 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full text-slate-900 pl-14 pr-14 py-4.5 bg-slate-50/40 border border-slate-100 rounded-[20px] focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all text-[15px] font-semibold placeholder:text-slate-200 tracking-widest"
+                className="w-full text-slate-900 pl-11 pr-11 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-[14px] placeholder:text-slate-300"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-300 hover:text-slate-500 transition-colors"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showPassword ? (
-                  <EyeOff size={20} strokeWidth={2.5} />
+                  <EyeOff size={18} />
                 ) : (
-                  <Eye size={20} strokeWidth={2.5} />
+                  <Eye size={18} />
                 )}
               </button>
             </div>
           </div>
 
           {/* Remember Me */}
-          <div className="flex items-center px-1.5">
-            <div className="relative flex items-center">
-              <input
-                id="remember"
-                type="checkbox"
-                className="h-5 w-5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer accent-blue-600"
-              />
-            </div>
+          <div className="flex items-center">
+            <input
+              id="remember"
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
             <label
               htmlFor="remember"
-              className="ml-3.5 block text-[14px] text-slate-500 font-bold cursor-pointer"
+              className="ml-2.5 block text-[13px] text-slate-500 font-medium cursor-pointer"
             >
               Remember me
             </label>
@@ -147,11 +145,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center items-center py-5 px-6 border border-transparent rounded-[20px] shadow-[0_12px_24px_-4px_rgba(37,99,235,0.24)] text-[16px] font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+            className="w-full flex justify-center items-center py-3.5 px-6 border border-transparent rounded-xl text-[15px] font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Signing in...</span>
               </div>
             ) : "Login"}
@@ -159,10 +157,10 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-[14px] text-slate-400 font-semibold">
+        <div className="mt-10 text-center">
+          <p className="text-[13px] text-slate-400 font-medium">
             Don&apos;t have an account?{" "}
-            <a href="#" className="font-extrabold text-blue-600 hover:text-blue-700 transition-colors">
+            <a href="#" className="font-bold text-blue-600 hover:text-blue-700 transition-colors">
               Contact your administrator
             </a>
           </p>
