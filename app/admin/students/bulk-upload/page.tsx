@@ -2,332 +2,235 @@
 
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, Download, X } from "lucide-react"
-import { createStudent } from "@/features/students/api"
+import { Upload, Download, X, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { bulkUploadStudents } from "@/features/students/api"
 
 export default function BulkUploadPage() {
-
   const router = useRouter()
-
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [file, setFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState("")
-  const [studentsPreview, setStudentsPreview] = useState<any[]>([])
   const [error, setError] = useState("")
   const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadStats, setUploadStats] = useState<{success: number, failed: number} | null>(null)
 
   /* DOWNLOAD TEMPLATE */
-
   const downloadTemplate = () => {
-
-    const csv =
-`id,name,email,institution,course,status
-STU-101,John Doe,john@email.com,Oxford Institute,Computer Science,Active
-STU-102,Emma Smith,emma@email.com,Stanford Hub,AI,Active`
+    const csv = `first_name,last_name,email,mobile_number,password,notes,course_id
+John,Doe,john.doe@example.com,1234567890,password123,Bulk upload test,1
+Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2,2`
 
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
 
     const a = document.createElement("a")
     a.href = url
-    a.download = "students_template.csv"
+    a.download = "students_bulk_upload_template.csv"
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   /* OPEN FILE PICKER */
-
   const openFilePicker = () => {
     fileInputRef.current?.click()
   }
 
-  /* HANDLE FILE UPLOAD */
+  /* HANDLE FILE SELECTION */
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0]
+    if (!selectedFile) return
 
-  const handleFileUpload = (event:any) => {
-
-    const file = event.target.files[0]
-
-    if (!file) return
-
-    if (!file.name.endsWith(".csv")) {
-
+    if (!selectedFile.name.endsWith(".csv")) {
       setError("Please upload only CSV files.")
+      setFile(null)
+      setFileName("")
       return
-
     }
 
-    setFileName(file.name)
-
-    const reader = new FileReader()
-
-    reader.onload = (e:any) => {
-
-      const csvText = e.target.result
-
-      const rows = csvText.split("\n").map((row:string)=>row.trim())
-
-      if (rows.length < 2) {
-
-        setError("CSV file is empty.")
-        return
-
-      }
-
-      const headers = rows[0].split(",")
-
-      if (
-        headers[0] !== "id" ||
-        headers[1] !== "name" ||
-        headers[2] !== "email"
-      ) {
-
-        setError("Invalid CSV format. Please use the template.")
-        return
-
-      }
-
-      const students:any[] = []
-
-      for (let i = 1; i < rows.length; i++) {
-
-        const cols = rows[i].split(",")
-
-        if (cols.length < 6) continue
-
-        students.push({
-          id: cols[0],
-          name: cols[1],
-          email: cols[2],
-          institution: cols[3],
-          course: cols[4],
-          status: cols[5]
-        })
-
-      }
-
-      setStudentsPreview(students)
-      setError("")
-
-    }
-
-    reader.readAsText(file)
-
+    setFile(selectedFile)
+    setFileName(selectedFile.name)
+    setError("")
+    setUploadSuccess(false)
+    setUploadStats(null)
   }
 
   /* UPLOAD STUDENTS */
-
-  const uploadStudents = async () => {
-    if (studentsPreview.length === 0) {
-      alert("Please upload CSV file first.")
+  const handleUpload = async () => {
+    if (!file) {
+      setError("Please select a CSV file first.")
       return
     }
 
     try {
       setIsUploading(true)
       setError("")
-      setUploadProgress({ current: 0, total: studentsPreview.length })
+      
+      const result = await bulkUploadStudents(file)
+      
+      setUploadSuccess(true)
+      setUploadStats({
+        success: result.data?.success_count || 0,
+        failed: result.data?.failed_count || 0
+      })
+      
+      // Clear file after success
+      setFile(null)
+      setFileName("")
+      if (fileInputRef.current) fileInputRef.current.value = ""
 
-      let successCount = 0
-      let failCount = 0
-
-      for (let i = 0; i < studentsPreview.length; i++) {
-        const student = studentsPreview[i]
-        try {
-          await createStudent(student)
-          successCount++
-        } catch (err) {
-          console.error(`Failed to upload student ${student.email}:`, err)
-          failCount++
-        }
-        setUploadProgress(prev => ({ ...prev, current: i + 1 }))
-      }
-
-      if (failCount === 0) {
-        alert(`Successfully uploaded all ${successCount} students!`)
+      // Optional: Redirect after a delay
+      setTimeout(() => {
         router.push("/admin/students")
-      } else {
-        alert(`Upload complete. Success: ${successCount}, Failed: ${failCount}`)
-        router.push("/admin/students")
-      }
+      }, 3000)
+
     } catch (err: any) {
       console.error("Bulk upload error:", err)
-      setError("An unexpected error occurred during upload.")
+      setError(err.message || "Failed to upload students. Please check your CSV format.")
     } finally {
       setIsUploading(false)
     }
   }
 
   return (
-
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       {/* BLUR BACKGROUND */}
-
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+      <div 
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+        onClick={() => !isUploading && router.push("/admin/students")}
+      ></div>
 
       {/* MODAL */}
-
-      <div className="relative bg-white w-full max-w-3xl rounded-xl shadow-lg p-8">
-
-        {/* CLOSE BUTTON */}
-
-        <button
-          onClick={()=>router.push("/admin/students")}
-          className="absolute right-5 top-5 text-gray-700 hover:text-black"
-        >
-          <X size={20}/>
-        </button>
-
-        {/* TITLE */}
-
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          Bulk Upload Students
-        </h2>
-
-        {/* TEMPLATE DOWNLOAD */}
-
-        <div className="flex justify-between items-center border p-4 rounded-lg bg-gray-50 mb-6">
-
-          <p className="text-sm text-gray-800">
-            Download template and fill student details before uploading.
-          </p>
-
+      <div className="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Bulk Upload Students</h2>
+            <p className="text-sm text-gray-500 mt-1">Import multiple students at once using a CSV file.</p>
+          </div>
           <button
-            onClick={downloadTemplate}
-            className="flex items-center gap-2 border px-4 py-2 rounded-lg text-gray-800 hover:bg-gray-100"
+            onClick={() => !isUploading && router.push("/admin/students")}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+            disabled={isUploading}
           >
-            <Download size={16}/>
-            Download Template
+            <X size={20}/>
           </button>
-
         </div>
 
-        {/* UPLOAD AREA */}
-
-        <div
-          onClick={openFilePicker}
-          className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50"
-        >
-
-          <Upload className="mx-auto text-gray-400 mb-3" size={32}/>
-
-          <p className="text-gray-800 font-medium">
-            Click here to Upload CSV File
-          </p>
-
-          <p className="text-sm text-gray-700 mt-1">
-            Only CSV format supported
-          </p>
-
-          <input
-            type="file"
-            accept=".csv"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-
-          {fileName && (
-
-            <p className="text-green-600 text-sm mt-3">
-              Selected: {fileName}
-            </p>
-
-          )}
-
-        </div>
-
-        {/* ERROR MESSAGE */}
-
-        {error && (
-
-          <p className="text-red-500 mt-3">{error}</p>
-
-        )}
-
-        {/* PREVIEW TABLE */}
-
-        {studentsPreview.length > 0 && (
-
-          <div className="mt-6">
-
-            <h3 className="font-semibold text-gray-900 mb-2">
-              Preview ({studentsPreview.length} students)
-            </h3>
-
-            <div className="max-h-48 overflow-auto border rounded-lg">
-
-              <table className="w-full text-sm">
-
-                <thead className="bg-gray-100 text-gray-900">
-
-                  <tr>
-                    <th className="p-2 text-left">ID</th>
-                    <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-left">Email</th>
-                    <th className="p-2 text-left">Institution</th>
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {studentsPreview.map((s,i)=>(
-
-                    <tr key={i} className="border-t">
-
-                      <td className="p-2 text-gray-900">{s.id}</td>
-                      <td className="p-2 text-gray-900">{s.name}</td>
-                      <td className="p-2 text-gray-800">{s.email}</td>
-                      <td className="p-2 text-gray-800">{s.institution}</td>
-
-                    </tr>
-
-                  ))}
-
-                </tbody>
-
-              </table>
-
+        <div className="p-8 space-y-8">
+          {/* Template Section */}
+          <div className="bg-blue-50/50 rounded-2xl p-6 flex items-start gap-4 border border-blue-100/50">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0 text-blue-600">
+              <Download size={20} />
             </div>
-
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-blue-900 mb-1">Step 1: Get the template</h3>
+              <p className="text-xs text-blue-700/70 mb-4 leading-relaxed">
+                Download our standardized CSV template to ensure your data format is correct before uploading.
+              </p>
+              <button
+                onClick={downloadTemplate}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-colors"
+              >
+                Download CSV Template
+              </button>
+            </div>
           </div>
 
-        )}
+          {/* Upload Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 px-1">
+              Step 2: Upload your file
+            </h3>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".csv"
+              className="hidden"
+            />
 
-        {/* BUTTONS */}
+            <div 
+              onClick={openFilePicker}
+              className={`
+                border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center gap-4 transition-all cursor-pointer
+                ${fileName ? 'border-blue-200 bg-blue-50/20' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50'}
+              `}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${fileName ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                {fileName ? <FileText size={28} /> : <Upload size={28} />}
+              </div>
+              
+              <div className="text-center">
+                {fileName ? (
+                  <>
+                    <p className="text-sm font-bold text-gray-900 truncate max-w-[300px]">{fileName}</p>
+                    <p className="text-xs text-blue-600 font-medium mt-1">Click to change file</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-gray-900">Choose a CSV file or drag it here</p>
+                    <p className="text-xs text-gray-400 mt-1">Maximum file size 5MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-3 mt-6">
+          {/* Status Messages */}
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3 text-sm font-medium border border-red-100 animate-in slide-in-from-top-2">
+              <AlertCircle size={18} className="shrink-0" />
+              {error}
+            </div>
+          )}
 
+          {uploadSuccess && (
+            <div className="bg-emerald-50 text-emerald-700 p-4 rounded-2xl flex flex-col gap-2 border border-emerald-100 animate-in slide-in-from-top-2">
+              <div className="flex items-center gap-3 text-sm font-bold">
+                <CheckCircle2 size={18} className="shrink-0" />
+                Upload Successful!
+              </div>
+              {uploadStats && (
+                <p className="text-xs font-medium ml-7 text-emerald-600/80">
+                  Successfully imported {uploadStats.success} students. {uploadStats.failed > 0 && `Failed: ${uploadStats.failed}`}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-8 py-6 bg-gray-50 flex justify-end gap-3">
           <button
-            onClick={()=>router.push("/admin/students")}
+            onClick={() => router.push("/admin/students")}
             disabled={isUploading}
-            className="border px-5 py-2 rounded-lg text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+            className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
-
           <button
-            onClick={uploadStudents}
-            disabled={studentsPreview.length === 0 || isUploading}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            className={`
+              px-8 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2
+              ${!file || isUploading ? 'bg-gray-300 shadow-none cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'}
+            `}
           >
             {isUploading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                {uploadProgress.current}/{uploadProgress.total}...
+                <Loader2 size={18} className="animate-spin" />
+                Uploading...
               </>
             ) : (
-              "Upload Students"
+              'Start Import'
             )}
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   )
-
 }

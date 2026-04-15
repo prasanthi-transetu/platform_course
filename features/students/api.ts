@@ -238,3 +238,28 @@ export async function deleteStudent(id: string | number) {
     throw new Error(err.message || "Failed to delete student");
   }
 }
+
+/**
+ * Bulk upload students via CSV
+ */
+export async function bulkUploadStudents(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers = getAuthHeaders();
+  // Remove Content-Type so browser sets it with boundary for multipart/form-data
+  delete headers["Content-Type"];
+
+  const response = await fetch(`${BASE_URL}/bulk-upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to bulk upload students");
+  }
+
+  return response.json();
+}
