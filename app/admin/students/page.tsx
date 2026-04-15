@@ -24,7 +24,7 @@ export default function StudentsPage() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const itemsPerPage = 50
+  const [itemsPerPage, setItemsPerPage] = useState(50)
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -70,14 +70,6 @@ export default function StudentsPage() {
   }, [currentPage, debouncedSearch, statusFilter, courseFilter, refreshTrigger])
 
   const triggerRefresh = () => setRefreshTrigger(prev => prev + 1)
-
-  // Refresh every 60 seconds to keep stats updated without overloading
-  useEffect(() => {
-    const interval = setInterval(() => {
-      triggerRefresh()
-    }, 60000)
-    return () => clearInterval(interval)
-  }, [])
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
@@ -284,9 +276,17 @@ export default function StudentsPage() {
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white">
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">Rows per page:</span>
-            <select className="border border-gray-200 rounded-md px-2 py-1 text-sm text-gray-700 bg-white outline-none focus:border-blue-500 cursor-pointer">
-              <option>10</option>
-              <option>50</option>
+            <select 
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="border border-gray-200 rounded-md px-2 py-1 text-sm text-gray-700 bg-white outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
             </select>
           </div>
           
