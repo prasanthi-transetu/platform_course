@@ -63,18 +63,32 @@ export default function UsersPage() {
     setIsFetching(true);
     try {
       const data = await fetchUsers();
-      console.log("Fetched users data:", data);
-      // If data is an array of users, map them to UserData interface
-      if (Array.isArray(data)) {
-        const mappedUsers = data.map((u: any) => ({
-          id: u.id?.toString() || "N/A",
-          name: u.full_name || u.name || "N/A",
-          email: u.email || "N/A",
-          role: u.role || "N/A",
-          joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
-          avatar: `https://i.pravatar.cc/150?u=${u.id}`,
-          status: u.status || "active"
-        }));
+      console.log("Raw users data from API:", data);
+      
+      const usersArray = Array.isArray(data) ? data : (data?.data || []);
+      
+      if (Array.isArray(usersArray)) {
+        const mappedUsers = usersArray.map((u: any) => {
+          // Determine status: 
+          // 1. If u.status exists, use it.
+          // 2. If ID starts with REQ-, it's pending.
+          // 3. Otherwise, default to active.
+          let status = u.status;
+          if (!status) {
+            const idStr = u.id?.toString() || "";
+            status = idStr.startsWith("REQ-") ? "pending" : "active";
+          }
+
+          return {
+            id: u.id?.toString() || "N/A",
+            name: u.full_name || u.name || "N/A",
+            email: u.email || "N/A",
+            role: u.role || "N/A",
+            joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
+            avatar: `https://i.pravatar.cc/150?u=${u.id}`,
+            status: status
+          };
+        });
         console.log("Mapped users for UI:", mappedUsers);
         setUsers(mappedUsers);
       }
@@ -357,7 +371,9 @@ export default function UsersPage() {
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">USER ID</th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">USER</th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">ROLE</th>
-                <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">JOINED DATE</th>
+                <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">
+                  {activeTab === "accepted" ? "JOINED DATE" : "REQUESTED DATE"}
+                </th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase text-center w-24">ACTION</th>
               </tr>
             </thead>
@@ -381,7 +397,9 @@ export default function UsersPage() {
 
                   <td className="py-4 px-4 text-gray-700 font-medium">{u.role}</td>
 
-                  <td className="py-4 px-4 text-gray-500">{u.joinedDate}</td>
+                  <td className="py-4 px-4 text-gray-500">
+                    {activeTab === "pending" ? `Requested: ${u.joinedDate}` : u.joinedDate}
+                  </td>
 
                   {/* ACTION */}
                   <td className="py-4 px-4 text-center relative">
