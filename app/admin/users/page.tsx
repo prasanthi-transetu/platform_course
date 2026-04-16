@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
+import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
-import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById } from "@/features/users/api";
+import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById, User } from "@/features/users/api";
 import { fetchInstitutions, Institution } from "@/features/institutions/api";
 
 interface UserData {
@@ -51,8 +51,12 @@ export default function UsersPage() {
   const loadInstitutions = async () => {
     try {
       const data = await fetchInstitutions();
-      if (Array.isArray(data)) {
-        setInstitutions(data);
+      console.log("Raw institutions data:", data);
+      
+      const institutionsArray = Array.isArray(data) ? data : ((data as any)?.data || []);
+      
+      if (Array.isArray(institutionsArray)) {
+        setInstitutions(institutionsArray);
       }
     } catch (error: unknown) {
       console.error("Error loading institutions:", error);
