@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { X, Pencil, Trash2, Eye, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
 import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById } from "@/features/users/api";
 import { fetchInstitutions, Institution } from "@/features/institutions/api";
@@ -33,7 +33,7 @@ export default function UsersPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserData | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
-  const [viewUser, setViewUser] = useState<any>(null);
+  const [viewUser, setViewUser] = useState<User | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isViewing, setIsViewing] = useState(false);
 
@@ -68,7 +68,7 @@ export default function UsersPage() {
       const usersArray = Array.isArray(data) ? data : (data?.data || []);
       
       if (Array.isArray(usersArray)) {
-        const mappedUsers = usersArray.map((u: any) => {
+        const mappedUsers = usersArray.map((u: User) => {
           // Determine status: 
           // 1. If u.status exists, use it.
           // 2. If ID starts with REQ-, it's pending.
@@ -764,11 +764,14 @@ export default function UsersPage() {
               ) : viewUser ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 pb-4 border-b border-gray-50">
-                    <img 
-                      src={`https://i.pravatar.cc/150?u=${viewUser.id}`} 
-                      alt={viewUser.full_name || viewUser.name} 
-                      className="w-16 h-16 rounded-full border-2 border-blue-100"
-                    />
+                    <div className="relative w-16 h-16">
+                      <Image 
+                        src={`https://i.pravatar.cc/150?u=${viewUser.id}`} 
+                        alt={viewUser.full_name || viewUser.name || "User Avatar"} 
+                        fill
+                        className="rounded-full border-2 border-blue-100 object-cover"
+                      />
+                    </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">{viewUser.full_name || viewUser.name || "N/A"}</h3>
                       <p className="text-sm text-gray-500">{viewUser.role}</p>
