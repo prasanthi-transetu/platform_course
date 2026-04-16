@@ -14,6 +14,7 @@ interface UserData {
   role: string;
   joinedDate: string;
   avatar: string;
+  status: string;
 }
 
 export default function UsersPage() {
@@ -62,6 +63,7 @@ export default function UsersPage() {
     setIsFetching(true);
     try {
       const data = await fetchUsers();
+      console.log("Fetched users data:", data);
       // If data is an array of users, map them to UserData interface
       if (Array.isArray(data)) {
         const mappedUsers = data.map((u: any) => ({
@@ -70,8 +72,10 @@ export default function UsersPage() {
           email: u.email || "N/A",
           role: u.role || "N/A",
           joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
-          avatar: `https://i.pravatar.cc/150?u=${u.id}`
+          avatar: `https://i.pravatar.cc/150?u=${u.id}`,
+          status: u.status || "active"
         }));
+        console.log("Mapped users for UI:", mappedUsers);
         setUsers(mappedUsers);
       }
     } catch (error: unknown) {
@@ -115,6 +119,13 @@ export default function UsersPage() {
     if (handleValidation(false)) {
       setIsLoading(true);
       try {
+        console.log("Creating user with data:", {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          institution: formData.institution
+        });
         await createUser({
           name: formData.name,
           email: formData.email,
@@ -126,6 +137,7 @@ export default function UsersPage() {
         loadUsers(); // Refresh the list
         alert("User created successfully!");
       } catch (error: unknown) {
+        console.error("Create user error:", error);
         const message = error instanceof Error ? error.message : "Failed to create user";
         alert(message);
       } finally {
@@ -201,7 +213,11 @@ export default function UsersPage() {
     // Handle both short and long forms of the role for filtering
     const normalizedUserRole = u.role === "Institution Rep" ? "Institution Representative" : u.role;
     const matchesRole = roleFilter === "All Roles" || normalizedUserRole === roleFilter;
-    return matchesSearch && matchesRole;
+
+    // Filter by tab status
+    const matchesTab = activeTab === "accepted" ? u.status === "active" : u.status === "pending";
+
+    return matchesSearch && matchesRole && matchesTab;
   });
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
