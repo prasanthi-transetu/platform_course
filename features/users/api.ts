@@ -32,7 +32,8 @@ async function handleResponse(response: Response) {
 
 export interface User {
   id: string | number;
-  name: string;
+  full_name?: string;
+  name?: string;
   email: string;
   role: string;
   institution?: string;
@@ -45,6 +46,15 @@ export interface User {
  */
 export async function fetchUsers() {
   const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
+  const result = await handleResponse(response);
+  return result.data || result;
+}
+
+/**
+ * Fetch a user by ID
+ */
+export async function fetchUserById(id: string | number) {
+  const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
   const result = await handleResponse(response);
   return result.data || result;
 }

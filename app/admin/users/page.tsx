@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
-import { createUser, fetchUsers, deleteUser, updateUser } from "@/features/users/api";
+import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById } from "@/features/users/api";
 import { fetchInstitutions, Institution } from "@/features/institutions/api";
 
 interface UserData {
@@ -32,6 +32,9 @@ export default function UsersPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserData | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+  const [viewUser, setViewUser] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Institution Representative", institution: "" });
@@ -168,6 +171,21 @@ export default function UsersPage() {
       } finally {
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleViewUser = async (id: string) => {
+    setIsViewing(true);
+    setIsViewModalOpen(true);
+    try {
+      const data = await fetchUserById(id);
+      setViewUser(data);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch user details";
+      alert(message);
+      setIsViewModalOpen(false);
+    } finally {
+      setIsViewing(false);
     }
   };
 
@@ -379,6 +397,15 @@ export default function UsersPage() {
                            </>
                          ) : (
                            <>
+                              <button
+                                onClick={() => {
+                                  handleViewUser(u.id);
+                                  setOpenMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Eye size={14} className="text-gray-500" /> View Details
+                              </button>
                               <button
                                 onClick={() => {
                                   setFormData({ name: u.name, email: u.email, password: "", role: u.role, institution: "" });
@@ -679,6 +706,80 @@ export default function UsersPage() {
               </button>
               <button onClick={handleDeleteSubmit} className="px-6 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm transition-colors flex items-center gap-2">
                 <Trash2 size={16} /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* VIEW USER MODAL */}
+      {isViewModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">User Details</h2>
+              <button onClick={() => setIsViewModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {isViewing ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  <p className="text-sm text-gray-500">Fetching user details...</p>
+                </div>
+              ) : viewUser ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 pb-4 border-b border-gray-50">
+                    <img 
+                      src={`https://i.pravatar.cc/150?u=${viewUser.id}`} 
+                      alt={viewUser.full_name || viewUser.name} 
+                      className="w-16 h-16 rounded-full border-2 border-blue-100"
+                    />
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{viewUser.full_name || viewUser.name || "N/A"}</h3>
+                      <p className="text-sm text-gray-500">{viewUser.role}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                      <p className="text-gray-900 font-medium">{viewUser.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">User ID</p>
+                      <p className="text-gray-900 font-medium">{viewUser.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Institution</p>
+                      <p className="text-gray-900 font-medium">{viewUser.institution || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Created At</p>
+                      <p className="text-gray-900 font-medium">
+                        {viewUser.created_at ? new Date(viewUser.created_at).toLocaleString() : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        viewUser.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {viewUser.status || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-4">No user data found.</p>
+              )}
+            </div>
+            <div className="p-6 pt-0 flex justify-end">
+              <button 
+                onClick={() => setIsViewModalOpen(false)} 
+                className="px-6 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
