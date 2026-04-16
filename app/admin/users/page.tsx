@@ -5,7 +5,6 @@ import Image from "next/image";
 import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
 import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById, User } from "@/features/users/api";
-import { fetchInstitutions, Institution } from "@/features/institutions/api";
 
 interface UserData {
   id: string;
@@ -27,7 +26,6 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [users, setUsers] = useState<UserData[]>([]);
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -45,23 +43,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadUsers();
-    loadInstitutions();
   }, []);
-
-  const loadInstitutions = async () => {
-    try {
-      const data = await fetchInstitutions();
-      console.log("Raw institutions data:", data);
-      
-      const institutionsArray = Array.isArray(data) ? data : ((data as any)?.data || []);
-      
-      if (Array.isArray(institutionsArray)) {
-        setInstitutions(institutionsArray);
-      }
-    } catch (error: unknown) {
-      console.error("Error loading institutions:", error);
-    }
-  };
 
   const loadUsers = async () => {
     setIsFetching(true);
@@ -597,18 +579,15 @@ export default function UsersPage() {
                 {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
-                <select
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Institution <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
                   value={formData.institution}
                   onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, false);}}
-                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
-                >
-                  <option value="">Select an institution...</option>
-                  {institutions.map((inst) => (
-                    <option key={inst.id} value={inst.name}>{inst.name}</option>
-                  ))}
-                </select>
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="Enter institution name"
+                />
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
@@ -698,18 +677,15 @@ export default function UsersPage() {
                 {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
-                <select
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Institution <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
                   value={formData.institution}
                   onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, true);}}
-                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
-                >
-                  <option value="">Select an institution...</option>
-                  {institutions.map((inst) => (
-                    <option key={inst.id} value={inst.name}>{inst.name}</option>
-                  ))}
-                </select>
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="Enter institution name"
+                />
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
