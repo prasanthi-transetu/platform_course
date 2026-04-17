@@ -36,7 +36,7 @@ export interface Student {
   last_name?: string;
   email: string;
   mobile_number?: string;
-  status: "active" | "inactive";
+  status: string;
   course_id?: number | string;
   course_name?: string;
   name?: string;
@@ -58,14 +58,14 @@ export function splitName(fullName: string) {
 /**
  * Mapping helper: Normalizes student data from backend to frontend format
  */
-function mapStudent(s: any): Student {
+function mapStudent(s: Record<string, unknown>): Student {
   // Handle both backend format (first_name/last_name) and local format (student_name/name)
-  const firstName = s.first_name || splitName(s.student_name || s.name || "").first_name;
-  const lastName = s.last_name || splitName(s.student_name || s.name || "").last_name;
+  const firstName = (s.first_name as string) || splitName((s.student_name as string) || (s.name as string) || "").first_name;
+  const lastName = (s.last_name as string) || splitName((s.student_name as string) || (s.name as string) || "").last_name;
   
   // Clean up ID to be a pure number - remove all non-digits
-  let rawId = s.student_id || s.id;
-  let cleanId = rawId;
+  const rawId = s.student_id || s.id;
+  let cleanId = rawId as string | number;
   if (rawId !== undefined && rawId !== null) {
     const strippedId = String(rawId).replace(/[^0-9]/g, "");
     if (strippedId) {
@@ -74,14 +74,14 @@ function mapStudent(s: any): Student {
   }
   
   return {
-    ...s,
+    ...(s as Record<string, unknown>), // Type assertion to keep existing properties
     id: cleanId,
     first_name: firstName,
     last_name: lastName,
-    name: s.student_name || s.name || `${firstName} ${lastName}`.trim(),
-    course_name: s.course_name || s.course?.name || "",
-    email: s.email || "",
-    status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).toLowerCase()) : "Active",
+    name: (s.student_name as string) || (s.name as string) || `${firstName} ${lastName}`.trim(),
+    course_name: (s.course_name as string) || (s.course as Record<string, unknown>)?.name as string || "",
+    email: (s.email as string) || "",
+    status: s.status ? ((s.status as string).charAt(0).toUpperCase() + (s.status as string).slice(1).toLowerCase()) : "Active",
   };
 }
 
@@ -116,11 +116,11 @@ export async function fetchStudents(page: number = 1, limit: number = 50, search
   if (result.data && Array.isArray(result.data)) {
     return {
       ...result,
-      data: result.data.map(mapStudent)
+      data: result.data.map((s: Record<string, unknown>) => mapStudent(s))
     };
   }
   
-  return Array.isArray(result) ? result.map(mapStudent) : result;
+  return Array.isArray(result) ? result.map((s: Record<string, unknown>) => mapStudent(s)) : result;
 }
 
 /**
@@ -130,7 +130,7 @@ export async function fetchStudent(id: string | number) {
   const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
   const result = await handleResponse(response);
   const student = result.data || result;
-  return mapStudent(student);
+  return mapStudent(student as Record<string, unknown>);
 }
 
 /**
@@ -151,7 +151,7 @@ export async function fetchActiveStudentCount() {
   return result.data?.active_students || 0;
 }
 
-export async function createStudent(data: any) {
+export async function createStudent(data: Record<string, unknown>) {
   const payload = {
     first_name: data.first_name,
     last_name: data.last_name,
@@ -172,18 +172,18 @@ export async function createStudent(data: any) {
 /**
  * Update a student with mapping
  */
-export async function updateStudent(id: string | number, data: any) {
+export async function updateStudent(id: string | number, data: Record<string, unknown>) {
   // Extract or split the name if only a single name field was provided
-  const { first_name, last_name } = splitName(data.name || "");
+  const { first_name, last_name } = splitName((data.name as string) || "");
 
-  const payload: any = {
+  const payload: Record<string, unknown> = {
     first_name: data.firstName || data.first_name || first_name,
     last_name: data.lastName || data.last_name || last_name,
     email: data.email,
     mobile_number: data.mobile || data.mobile_number,
     password: data.password || undefined,
     notes: data.notes || undefined,
-    status: data.status ? data.status.toLowerCase() : undefined,
+    status: data.status ? (data.status as string).toLowerCase() : undefined,
     course_id: data.courseId || data.course_id || data.course, // Support both
   };
 

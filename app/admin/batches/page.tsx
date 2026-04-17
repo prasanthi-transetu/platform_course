@@ -4,13 +4,22 @@ import { useState } from "react";
 import Link from "next/link";
 import { MoreVertical, Users, Layers, CheckCircle, XCircle } from "lucide-react";
 
+interface Batch {
+  id: string | number;
+  name: string;
+  instructor: string;
+  students: number;
+  status: string;
+  institutionId?: string;
+}
+
 export default function BatchesPage() {
 
-  const batches: any[] = [];
+  const batches: Batch[] = [];
 
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | number | null>(null);
 
   const totalPages = Math.ceil(batches.length / rowsPerPage);
   const start = (page - 1) * rowsPerPage;

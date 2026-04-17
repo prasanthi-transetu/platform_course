@@ -45,9 +45,10 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
           notes: data.notes || "",
           status: (data.status?.toLowerCase() as "active" | "inactive") || "active"
         });
-      } catch (err: any) {
-        console.error("Error fetching student:", err);
-        setError(err.message || "Failed to load student data");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message);
+        setError(message || "Failed to load student data");
       } finally {
         setIsLoading(false);
       }
@@ -78,9 +79,10 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
       await updateStudent(studentId, formData);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong updating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong updating the student");
     } finally {
       setIsUpdating(false);
     }

@@ -3,19 +3,24 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+interface Tutor {
+  id: string | number;
+  name: string;
+}
+
 export default function DeleteTutorPage() {
   const params = useParams();
   const router = useRouter();
   const tutorId = params.id;
 
-  const [tutor, setTutor] = useState<any>(null);
+  const [tutor, setTutor] = useState<Tutor | null>(null);
   const [associatedBatch, setAssociatedBatch] = useState(false); // controls Delete button
   const [checkboxChecked, setCheckboxChecked] = useState(false); // checkbox state
 
   useEffect(() => {
     // Get tutor from localStorage
     const tutors = JSON.parse(localStorage.getItem("tutors") || "[]");
-    const found = tutors.find((t: any) => t.id == tutorId);
+    const found = tutors.find((t: Tutor) => t.id == tutorId);
     if (found) setTutor(found);
 
     // By default checkbox is UNMARKED, admin can choose
@@ -31,7 +36,7 @@ export default function DeleteTutorPage() {
   const handleDelete = () => {
     if (!tutor || associatedBatch) return;
     let tutors = JSON.parse(localStorage.getItem("tutors") || "[]");
-    tutors = tutors.filter((t: any) => t.id != tutor.id);
+    tutors = tutors.filter((t: Tutor) => t.id != tutor.id);
     localStorage.setItem("tutors", JSON.stringify(tutors));
     router.push("/admin/tutors");
   };

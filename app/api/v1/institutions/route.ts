@@ -4,9 +4,17 @@ const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.on
 const BACKEND_URL = process.env.BACKEND_API_URL || `${API_HOST}/api/v1/institutions`;
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search");
   const authHeader = request.headers.get("Authorization");
+  
   try {
-    const response = await fetch(BACKEND_URL, {
+    let url = BACKEND_URL;
+    if (search) {
+      url = `${BACKEND_URL}/search?search=${encodeURIComponent(search)}`;
+    }
+
+    const response = await fetch(url, {
       headers: { 
         "Content-Type": "application/json",
         ...(authHeader ? { "Authorization": authHeader } : {})

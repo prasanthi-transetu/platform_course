@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-export default function CreateDomainModal({ isOpen, onClose, onSubmit }: any) {
+interface CreateDomainModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Record<string, unknown>) => void;
+}
+
+export default function CreateDomainModal({ isOpen, onClose, onSubmit }: CreateDomainModalProps) {
   const [domainName, setDomainName] = useState("");
   const [description, setDescription] = useState("");
   const [finalAssignment, setFinalAssignment] = useState("");

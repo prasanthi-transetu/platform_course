@@ -85,9 +85,16 @@ export default function CoursesPage() {
     },
   ]);
 
-  const handleCreateDomain = (newDomain: any) => {
+  const handleCreateDomain = (newDomain: Record<string, unknown>) => {
     const nextId = domains.length ? Math.max(...domains.map(d => d.id)) + 1 : 1;
-    setDomains([...domains, { ...newDomain, id: nextId }]);
+    setDomains([...domains, { 
+      id: nextId,
+      name: newDomain.name as string,
+      category: newDomain.category as string,
+      courses: (newDomain.courses as number) || 0,
+      updated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: (newDomain.status as string) || "Active"
+    }]);
   };
 
   const filteredCourses = courses.filter((c) =>
@@ -276,8 +283,8 @@ export default function CoursesPage() {
   );
 }
 /* STAT CARD */
-function StatCard({ title, value, icon, color = "blue" }: any) {
-  const colorMap: any = {
+function StatCard({ title, value, icon, color = "blue" }: { title: string; value: string; icon: React.ReactNode; color?: string }) {
+  const colorMap: Record<string, string> = {
     blue: "text-blue-600 bg-blue-100",
     green: "text-green-600 bg-green-100",
     yellow: "text-yellow-600 bg-yellow-100",
@@ -290,7 +297,7 @@ function StatCard({ title, value, icon, color = "blue" }: any) {
         <h2 className="text-2xl font-bold text-gray-900">{value}</h2>
       </div>
 
-      <div className={`p-2 rounded-lg ${colorMap[color]}`}>
+      <div className={`p-2 rounded-lg ${colorMap[color] || ""}`}>
         {icon}
       </div>
     </div>

@@ -33,11 +33,11 @@ export default function EditTutorPage() {
       JSON.parse(localStorage.getItem("tutors") || "[]")
 
     const found =
-      storedTutors.find((t:any)=>t.id == tutorId)
+      storedTutors.find((t: Record<string, unknown>)=>t.id == tutorId)
 
     if (found) {
 
-      setTutor(found)
+      setTutor(found as typeof tutor)
 
     }
 
@@ -45,7 +45,7 @@ export default function EditTutorPage() {
 
   /* HANDLE INPUT */
 
-  const handleChange = (e:any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
 
     const { name, value } = e.target
 
@@ -59,8 +59,8 @@ export default function EditTutorPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
-  const handleBlur = (e:any) => {
-    const { name } = e.target
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name } = e.currentTarget
     setTouched(prev => ({ ...prev, [name]: true }))
     validateField(name, tutor[name as keyof typeof tutor] as string)
   }
@@ -162,7 +162,7 @@ export default function EditTutorPage() {
     if (!validateAll()) return
 
     const storedTutors = JSON.parse(localStorage.getItem("tutors") || "[]")
-    const updatedTutors = storedTutors.map((t:any)=>{
+    const updatedTutors = storedTutors.map((t: Record<string, unknown>)=>{
       if (t.id == tutorId) return tutor
       return t
     })

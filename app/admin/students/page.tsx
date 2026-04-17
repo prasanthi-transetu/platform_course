@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { fetchStudents, fetchStudentCount, fetchActiveStudentCount } from "@/features/students/api"
+import { fetchStudents, fetchActiveStudentCount, type Student } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -81,7 +81,6 @@ export default function StudentsPage() {
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
-  const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedStudents = students; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)

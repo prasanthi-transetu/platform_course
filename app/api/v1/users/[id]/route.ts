@@ -29,6 +29,64 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const authHeader = request.headers.get("Authorization");
+  
+  try {
+    const body = await request.json();
+    console.log(`PATCH User proxy [${BACKEND_URL}/${id}] payload:`, body);
+    
+    // Add timeout to fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/${id}`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          ...(authHeader ? { "Authorization": authHeader } : {})
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      console.log(`PATCH User proxy [${BACKEND_URL}/${id}] response status:`, response.status);
+      
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+        console.log(`PATCH User proxy [${BACKEND_URL}/${id}] response JSON:`, data);
+      } else {
+        const text = await response.text();
+        console.log(`PATCH User proxy [${BACKEND_URL}/${id}] response Text:`, text);
+        data = { message: text || `Backend returned status ${response.status}` };
+      }
+      
+      return NextResponse.json(data, { status: response.status });
+     } catch (fetchError: unknown) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          return NextResponse.json({ message: "Backend request timed out" }, { status: 504 });
+        }
+        throw fetchError;
+      }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`PATCH User proxy error [${BACKEND_URL}/${id}]:`, message);
+    return NextResponse.json(
+      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}: ${message}` },
+      { status: 502 }
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -38,21 +96,50 @@ export async function PUT(
   
   try {
     const body = await request.json();
-    const response = await fetch(`${BACKEND_URL}/${id}`, {
-      method: "PUT",
-      headers: { 
-        "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    console.log(`PUT User proxy [${BACKEND_URL}/${id}] payload:`, body);
+    
+    // Add timeout to fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/${id}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          ...(authHeader ? { "Authorization": authHeader } : {})
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      console.log(`PUT User proxy [${BACKEND_URL}/${id}] response status:`, response.status);
+      
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+        console.log(`PUT User proxy [${BACKEND_URL}/${id}] response JSON:`, data);
+      } else {
+        const text = await response.text();
+        console.log(`PUT User proxy [${BACKEND_URL}/${id}] response Text:`, text);
+        data = { message: text || `Backend returned status ${response.status}` };
+      }
+      
+      return NextResponse.json(data, { status: response.status });
+     } catch (fetchError: unknown) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          return NextResponse.json({ message: "Backend request timed out" }, { status: 504 });
+        }
+        throw fetchError;
+      }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`PUT User proxy error [${BACKEND_URL}/${id}]:`, message);
     return NextResponse.json(
-      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}.` },
+      { message: `Failed to connect to backend at ${BACKEND_URL}/${id}: ${message}` },
       { status: 502 }
     );
   }

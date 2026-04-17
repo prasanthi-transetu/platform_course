@@ -38,18 +38,19 @@ export default function EditInstitutionPage() {
           setLocation(inst.location)
           if (inst.contacts?.length > 0) setContacts(inst.contacts)
         }
-      } catch (err: any) {
-        console.error("Failed to load institution:", err)
-        setError(err.message || "Failed to load institution")
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Failed to load institution:", message)
+        setError(message || "Failed to load institution")
         
         // Fallback to localStorage for compatibility
         const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
-        const inst = stored.find((i: any) => i.id === params.id)
+        const inst = stored.find((i: Record<string, unknown>) => i.id === params?.id)
         if (inst) {
-          setName(inst.name)
-          setEmail(inst.email)
-          setLocation(inst.location)
-          if (inst.contacts?.length > 0) setContacts(inst.contacts)
+          setName(inst.name as string)
+          setEmail(inst.email as string)
+          setLocation(inst.location as string)
+          if (Array.isArray(inst.contacts) && inst.contacts.length > 0) setContacts(inst.contacts)
         }
       } finally {
         setIsLoading(false)
@@ -162,38 +163,23 @@ export default function EditInstitutionPage() {
   const handleUpdate = async () => {
     if (!validateAll()) return
 
+    setSubmitting(true)
+    setError(null)
+
     try {
-      setSubmitting(true)
-      setError(null)
-      
       const payload = {
         name,
         email,
         location,
-        contacts: contacts.map(c => ({
-          name: c.name,
-          role: c.role,
-          email: c.email,
-          phone: c.phone
-        }))
+        contacts,
       }
 
-      await updateInstitution(params.id as string, payload)
-
-      // Sync local storage as fallback
-      const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
-      const updated = stored.map((inst: any) => {
-        if (inst.id === params.id) {
-          return { ...inst, ...payload }
-        }
-        return inst
-      })
-      localStorage.setItem("institutions", JSON.stringify(updated))
-      
+      await updateInstitution(params?.id as string, payload)
       router.push("/admin/institutions")
-    } catch (err: any) {
-      console.error("Failed to update institution:", err)
-      setError(err.message || "Failed to update institution")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Failed to update institution:", message)
+      setError(message || "Failed to update institution")
     } finally {
       setSubmitting(false)
     }

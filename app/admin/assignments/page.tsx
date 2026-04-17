@@ -49,13 +49,17 @@ export default function AssignmentsPage() {
     },
   ]);
 
-  const handleCreateAssignment = (newAsg: any) => {
+  const handleCreateAssignment = (newAsg: Record<string, unknown>) => {
     const nextNum = assignments.length ? Math.max(...assignments.map(a => parseInt(a.id.split("-")[1] || "0"))) + 1 : 124;
     const newId = `ASG-${nextNum.toString().padStart(5, '0')}`;
     
     setAssignments([...assignments, {
-      ...newAsg,
       id: newId,
+      title: newAsg.title as string,
+      domain: newAsg.domain as string,
+      tags: newAsg.tags as string[],
+      marks: newAsg.marks as number,
+      submissionType: newAsg.submissionType as string,
       course: "New Course",
       courseColor: "blue"
     }]);
@@ -221,8 +225,8 @@ export default function AssignmentsPage() {
   );
 }
 
-function StatCard({ title, value, icon, color }: any) {
-  const bgMap: any = {
+function StatCard({ title, value, icon, color }: { title: string; value: string; icon: React.ReactNode; color: string }) {
+  const bgMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
     green: "bg-emerald-50 text-emerald-600",
     orange: "bg-amber-50 text-amber-600",
@@ -233,7 +237,7 @@ function StatCard({ title, value, icon, color }: any) {
     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
       <div className="flex justify-between items-start mb-2">
         <p className="text-gray-400 text-[11px] font-bold tracking-widest uppercase">{title}</p>
-        <div className={`p-1.5 rounded-md ${bgMap[color]}`}>
+        <div className={`p-1.5 rounded-md ${bgMap[color] || ""}`}>
           {icon}
         </div>
       </div>
@@ -242,14 +246,15 @@ function StatCard({ title, value, icon, color }: any) {
   );
 }
 
-function CourseBadge({ label, color }: any) {
-  const map: any = {
+function CourseBadge({ label, color }: { label: string; color: string }) {
+  const map: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
     purple: "bg-purple-50 text-purple-600",
     orange: "bg-amber-50 text-amber-600",
   };
+
   return (
-    <span className={`px-2.5 py-1 text-[10px] font-extrabold tracking-wider rounded-md ${map[color] || map.blue}`}>
+    <span className={`px-2 py-1 rounded text-xs font-bold ${map[color] || "bg-gray-100 text-gray-600"}`}>
       {label}
     </span>
   );

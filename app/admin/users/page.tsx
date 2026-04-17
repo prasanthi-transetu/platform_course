@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { X, Pencil, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { X, Pencil, Trash2, Eye, EyeOff, Loader2, Plus, Search, MoreVertical } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
-import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById, User } from "@/features/users/api";
+import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById, User, fetchAdminCount, fetchRepresentativeCount, fetchInstitutionCount } from "@/features/users/api";
 
 interface UserData {
   id: string;
   name: string;
   email: string;
   role: string;
+  institution: string;
   joinedDate: string;
   avatar: string;
   status: string;
@@ -26,6 +26,9 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [adminCount, setAdminCount] = useState<number | string>("...");
+  const [representativeCount, setRepresentativeCount] = useState<number | string>("...");
+  const [institutionCount, setInstitutionCount] = useState<number | string>("...");
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -36,7 +39,7 @@ export default function UsersPage() {
   const [isViewing, setIsViewing] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Institution Representative", institution: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "", institution: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -48,28 +51,59 @@ export default function UsersPage() {
   const loadUsers = async () => {
     setIsFetching(true);
     try {
-      const data = await fetchUsers();
-      console.log("Raw users data from API:", data);
+      // Fetch users, admin count, representative count and institution count in parallel
+      const [result, count, repCount, instCount] = await Promise.all([
+        fetchUsers(),
+        fetchAdminCount().catch(err => {
+          console.error("Admin count fetch failed:", err);
+          return 0; // Fallback to 0
+        }),
+        fetchRepresentativeCount().catch(err => {
+          console.error("Representative count fetch failed:", err);
+          return 0; // Fallback to 0
+        }),
+        fetchInstitutionCount().catch(err => {
+          console.error("Institution count fetch failed:", err);
+          return 0; // Fallback to 0
+        })
+      ]);
       
-      const usersArray = Array.isArray(data) ? data : (data?.data || []);
+      console.log("Raw API response:", result);
+      console.log("Admin count:", count);
+      console.log("Representative count:", repCount);
+      console.log("Institution count:", instCount);
+      setAdminCount(count);
+      setRepresentativeCount(repCount);
+      setInstitutionCount(instCount);
+      
+      // Handle different possible response structures
+      const usersArray = Array.isArray(result) ? result : (result?.data || result?.users || []);
       
       if (Array.isArray(usersArray)) {
         const mappedUsers = usersArray.map((u: User) => {
-          // Determine status: 
-          // 1. If u.status exists, use it.
-          // 2. If ID starts with REQ-, it's pending.
-          // 3. Otherwise, default to active.
           let status = u.status;
           if (!status) {
             const idStr = u.id?.toString() || "";
             status = idStr.startsWith("REQ-") ? "pending" : "active";
           }
 
+          // Normalize role for UI dropdown matching
+          let role = u.role || "N/A";
+          const lowerRole = role.toLowerCase();
+          if (lowerRole.includes("institution rep")) {
+            role = "Institution Representative";
+          } else if (lowerRole === "admin") {
+            role = "Admin";
+          } else if (lowerRole === "tutor") {
+            role = "Tutor";
+          }
+
           return {
             id: u.id?.toString() || "N/A",
             name: u.full_name || u.name || "N/A",
             email: u.email || "N/A",
-            role: u.role || "N/A",
+            role: role,
+            institution: u.institution || "N/A",
             joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
             avatar: `https://i.pravatar.cc/150?u=${u.id}`,
             status: status
@@ -77,9 +111,13 @@ export default function UsersPage() {
         });
         console.log("Mapped users for UI:", mappedUsers);
         setUsers(mappedUsers);
+      } else {
+        console.warn("API returned non-array data for users:", result);
+        setUsers([]);
       }
     } catch (error: unknown) {
       console.error("Error loading users:", error);
+      setUsers([]);
     } finally {
       setIsFetching(false);
     }
@@ -94,7 +132,11 @@ export default function UsersPage() {
     }
     if (field === "password" && !isEdit && isEmpty(value)) error = "Password is required";
     if (field === "role" && isEmpty(value)) error = "Role is required";
-    if (field === "institution" && isEmpty(value)) error = "Institution is required";
+    if (field === "institution" && isEmpty(value) && !isEdit) error = "Institution is required";
+    // For edit, we allow empty institution if it's N/A or admin
+    if (field === "institution" && isEdit && isEmpty(value)) {
+       // Only require if not admin (but UI shows N/A anyway)
+    }
     
     setErrors(prev => {
       if (error) return { ...prev, [field]: error };
@@ -119,27 +161,37 @@ export default function UsersPage() {
     if (handleValidation(false)) {
       setIsLoading(true);
       try {
-        console.log("Creating user with data:", {
-          name: formData.name,
+        // Map the role back to what the backend expects (lowercase)
+        let apiRole = formData.role.toLowerCase();
+        if (apiRole.includes("institution representative")) {
+          apiRole = "institution_rep";
+        }
+        
+        const payload: Record<string, unknown> = {
+          full_name: formData.name,
+          name: formData.name, // Send both to be safe
           email: formData.email,
           password: formData.password,
-          role: formData.role,
-          institution: formData.institution
+          role: apiRole,
+          institution: (formData.institution === "N/A" || !formData.institution) ? "" : formData.institution
+        };
+
+        // Clean payload: remove undefined values
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
         });
-        await createUser({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-          institution: formData.institution
-        });
+
+        console.log("Creating user with payload:", payload);
+        await createUser(payload as Record<string, unknown>);
         setIsCreateModalOpen(false);
         loadUsers(); // Refresh the list
         alert("User created successfully!");
       } catch (error: unknown) {
-        console.error("Create user error:", error);
+        console.error("Create user error details:", error);
         const message = error instanceof Error ? error.message : "Failed to create user";
-        alert(message);
+        alert(`Error: ${message}`);
       } finally {
         setIsLoading(false);
       }
@@ -150,19 +202,45 @@ export default function UsersPage() {
     if (handleValidation(true) && editUser) {
       setIsLoading(true);
       try {
-        await updateUser(editUser.id, {
-          name: formData.name,
+        // Map the role back to what the backend expects (lowercase)
+        let apiRole = formData.role.toLowerCase();
+        if (apiRole.includes("institution representative")) {
+          apiRole = "institution_rep";
+        }
+        
+        // ONLY send fields that the backend expects for an update
+        // Using PUT as required by the backend. 
+        // We align with create payload structure to avoid 400 errors.
+        const payload: Record<string, unknown> = {
+          full_name: formData.name,
+          name: formData.name, // Include both for compatibility
           email: formData.email,
-          password: formData.password || undefined,
-          role: formData.role,
-          institution: formData.institution
+          role: apiRole,
+          institution: (formData.institution === "N/A" || !formData.institution) ? "" : formData.institution
+        };
+
+        // Only add password if changed and not empty
+        if (formData.password && formData.password.trim() !== "") {
+          payload.password = formData.password;
+        }
+
+        // Clean payload: remove undefined values
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
         });
+
+        console.log("Updating user (PUT):", editUser.id, "with payload:", payload);
+
+        await updateUser(editUser.id, payload as Record<string, unknown>);
         setEditUser(null);
         loadUsers(); // Refresh the list
         alert("User updated successfully!");
       } catch (error: unknown) {
+        console.error("Update user error details:", error);
         const message = error instanceof Error ? error.message : "Failed to update user";
-        alert(message);
+        alert(`Error: ${message}`);
       } finally {
         setIsLoading(false);
       }
@@ -210,9 +288,8 @@ export default function UsersPage() {
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.id.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Handle both short and long forms of the role for filtering
-    const normalizedUserRole = u.role === "Institution Rep" ? "Institution Representative" : u.role;
-    const matchesRole = roleFilter === "All Roles" || normalizedUserRole === roleFilter;
+    // Roles are already normalized in loadUsers
+    const matchesRole = roleFilter === "All Roles" || u.role === roleFilter;
 
     // Filter by tab status
     const matchesTab = activeTab === "accepted" ? u.status === "active" : u.status === "pending";
@@ -241,9 +318,7 @@ export default function UsersPage() {
           onClick={() => { setFormData({ name: "", email: "", password: "", role: "Institution Representative", institution: "" }); setErrors({}); setTouched({}); setIsCreateModalOpen(true); }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-4 h-4" />
           Create New User
         </button>
       </div>
@@ -258,7 +333,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Total Admins <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">24</h2>
+            <h2 className="text-3xl font-bold">{adminCount}</h2>
           </div>
         </div>
 
@@ -270,7 +345,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Institution Representatives <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">38</h2>
+            <h2 className="text-3xl font-bold">{representativeCount}</h2>
           </div>
         </div>
 
@@ -282,7 +357,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Total Institutions <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">12</h2>
+            <h2 className="text-3xl font-bold">{institutionCount}</h2>
           </div>
         </div>
       </div>
@@ -312,9 +387,7 @@ export default function UsersPage() {
 
           <div className="flex items-center gap-4 w-full lg:w-auto">
             <div className="relative w-full lg:w-80">
-              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               <input
                 placeholder="Search by name, email, or User ID..."
                 value={searchQuery}
@@ -390,12 +463,10 @@ export default function UsersPage() {
                   {/* ACTION */}
                   <td className="py-4 px-4 text-center relative">
                     <button
-                      className="text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
                       onClick={() => setOpenMenu(openMenu === u.id ? null : u.id)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
+                      <MoreVertical size={16} className="text-gray-400" />
                     </button>
 
                     {openMenu === u.id && (
@@ -427,9 +498,26 @@ export default function UsersPage() {
                                 <Eye size={14} className="text-gray-500" /> View Details
                               </button>
                               <button
-                                onClick={() => {
-                                  setFormData({ name: u.name, email: u.email, password: "", role: u.role, institution: "" });
-                                  setErrors({}); setTouched({}); setEditUser(u); setOpenMenu(null);
+                                onClick={async () => {
+                                  setOpenMenu(null);
+                                  setIsLoading(true);
+                                  try {
+                                    const fullUser = await fetchUserById(u.id);
+                                    setFormData({ 
+                                      name: fullUser.full_name || fullUser.name || u.name, 
+                                      email: fullUser.email || u.email, 
+                                      password: "", 
+                                      role: u.role, 
+                                      institution: fullUser.institution || u.institution 
+                                    });
+                                    setErrors({}); 
+                                    setTouched({}); 
+                                    setEditUser(u);
+                                  } catch (error) {
+                                    alert("Failed to fetch user details for editing");
+                                  } finally {
+                                    setIsLoading(false);
+                                  }
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
@@ -693,8 +781,18 @@ export default function UsersPage() {
               <button onClick={() => setEditUser(null)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
                 Cancel
               </button>
-              <button onClick={handleEditSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
-                Save Changes
+              <button 
+                onClick={handleEditSubmit} 
+                disabled={isLoading}
+                className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </div>
           </div>
@@ -744,13 +842,10 @@ export default function UsersPage() {
               ) : viewUser ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 pb-4 border-b border-gray-50">
-                    <div className="relative w-16 h-16">
-                      <Image 
-                        src={`https://i.pravatar.cc/150?u=${viewUser.id}`} 
-                        alt={viewUser.full_name || viewUser.name || "User Avatar"} 
-                        fill
-                        className="rounded-full border-2 border-blue-100 object-cover"
-                      />
+                    <div className="relative w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-50">
+                      <span className="text-2xl font-bold text-blue-600">
+                        {(viewUser.full_name || viewUser.name || "N").charAt(0)}
+                      </span>
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">{viewUser.full_name || viewUser.name || "N/A"}</h3>

@@ -63,9 +63,12 @@ export interface UpdateInstitutionPayload {
   contacts?: InstitutionContact[];
 }
 
-// Fetch all institutions
-export async function fetchInstitutions(): Promise<Institution[]> {
-  const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
+// Fetch all institutions or search by query
+export async function fetchInstitutions(search?: string): Promise<Institution[]> {
+  const url = search 
+    ? `${BASE_URL}?search=${encodeURIComponent(search)}` 
+    : BASE_URL;
+  const response = await fetch(url, { headers: getAuthHeaders() });
   return handleResponse(response);
 }
 

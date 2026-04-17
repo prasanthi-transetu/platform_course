@@ -7,8 +7,6 @@ import {
   Users,
   Plus,
   School,
-  UserPlus,
-  GraduationCap,
   ArrowRight
 } from "lucide-react"
 import Link from "next/link"
