@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { useStudents, useStudentCounts } from "@/features/students/api"
+import { fetchStudents, fetchActiveStudentCount, type Student } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
 
 export default function StudentsPage() {
+  const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -33,10 +34,37 @@ export default function StudentsPage() {
     error: queryError 
   } = useStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter);
 
-  const { 
-    data: countsData,
-    isLoading: countsLoading
-  } = useStudentCounts();
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch list and active count in parallel
+        const [studentsData, activeCount] = await Promise.all([
+          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
+          fetchActiveStudentCount()
+        ])
+        
+        setStudents(studentsData.students)
+        setApiTotalPages(studentsData.totalPages)
+        setApiTotalStudents(studentsData.total)
+        setActiveStudentsCount(activeCount)
+        setError(null)
+        setIsRateLimited(false)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student data:", err)
+        
+        // Handle Rate Limiting (429) specifically
+        if (message.includes("429") || message.includes("Too many requests")) {
+          setIsRateLimited(true)
+          setError("Too many requests from this IP. Please wait 15 minutes before refreshing.")
+        } else {
+          setError(message || "Failed to load students. Please ensure your backend is running.")
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
 
   const students = studentsData?.students || []
   const apiTotalPages = studentsData?.totalPages || 1
@@ -46,6 +74,7 @@ export default function StudentsPage() {
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
+  const paginatedStudents = students; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 

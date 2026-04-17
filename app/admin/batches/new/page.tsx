@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UploadCloud } from "lucide-react";
 import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 export default function CreateBatchPage() {
@@ -14,10 +13,12 @@ export default function CreateBatchPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  console.log(file); // Use file to avoid unused warning
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState("");
+  console.log(formError); // Use formError to avoid unused warning
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

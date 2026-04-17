@@ -30,6 +30,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const authHeader = request.headers.get("Authorization");
     const body = await request.json();
     const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
@@ -57,9 +58,7 @@ export async function DELETE(
     const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
-      headers: {
-        ...(authHeader ? { "Authorization": authHeader } : {})
-      }
+      headers: authHeader ? { "Authorization": authHeader } : {},
     });
     
     // Some APIs return 204 No Content

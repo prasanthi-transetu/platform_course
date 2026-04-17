@@ -3,14 +3,14 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchInstitutionById, deleteInstitution } from "@/features/institutions/api";
+import { fetchInstitutionById, deleteInstitution, type Institution } from "@/features/institutions/api";
 
 export default function DeleteInstitutionPage() {
 
   const params = useParams();
   const router = useRouter();
 
-  const [institution, setInstitution] = useState<any>(null);
+  const [institution, setInstitution] = useState<Institution | null>(null);
   const [checked, setChecked] = useState(false);
   const [hasActiveBatches, setHasActiveBatches] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,21 +25,22 @@ export default function DeleteInstitutionPage() {
         setIsLoading(true);
         const inst = await fetchInstitutionById(params.id as string);
         setInstitution(inst);
-      } catch (err: any) {
-        console.error("Failed to load institution:", err);
-        setError(err.message || "Failed to load institution");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Failed to load institution:", message);
+        setError(message || "Failed to load institution");
         
         // Fallback to localStorage
         const storedInstitutions = JSON.parse(localStorage.getItem("institutions") || "[]");
-        const inst = storedInstitutions.find((i: any) => i.id === params?.id);
-        setInstitution(inst);
+        const inst = storedInstitutions.find((i: Record<string, unknown>) => i.id === params?.id);
+        setInstitution(inst as Institution);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadInstitution();
-  }, [params]);
+  }, [params?.id]);
 
 
   const handleCheck = () => {
@@ -50,7 +51,7 @@ export default function DeleteInstitutionPage() {
       JSON.parse(localStorage.getItem("batches") || "[]");
 
     const activeBatchExists = batches.some(
-      (b: any) =>
+      (b: Record<string, unknown>) =>
         b.institutionId === params?.id &&
         b.status === "Active"
     );
@@ -70,13 +71,14 @@ export default function DeleteInstitutionPage() {
 
       // Success - sync local storage fallback
       const storedInstitutions = JSON.parse(localStorage.getItem("institutions") || "[]");
-      const updatedInstitutions = storedInstitutions.filter((i: any) => i.id !== params?.id);
+      const updatedInstitutions = storedInstitutions.filter((i: Record<string, unknown>) => i.id !== params?.id);
       localStorage.setItem("institutions", JSON.stringify(updatedInstitutions));
 
       router.push("/admin/institutions");
-    } catch (err: any) {
-      console.error("Failed to delete institution:", err);
-      setError(err.message || "Failed to delete institution. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Failed to delete institution:", message);
+      setError(message || "Failed to delete institution. Please try again.");
     } finally {
       setIsDeleting(false);
     }

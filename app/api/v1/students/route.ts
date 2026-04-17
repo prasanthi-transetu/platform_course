@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
-    console.error(`GET Students proxy connection error [${BACKEND_URL}]:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`GET Students proxy connection error [${BACKEND_URL}]:`, message);
     return NextResponse.json(
       { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
       { status: 503 }
@@ -59,9 +60,10 @@ export async function POST(request: NextRequest) {
     console.log("Backend Response Body:", JSON.stringify(data, null, 2));
     
     return NextResponse.json(data, { status: response.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error(`--- DEBUG: PROXY POST ERROR [${BACKEND_URL}] ---`);
-    console.error("Error Message:", error.message);
+    console.error("Error Message:", message);
     return NextResponse.json(
       { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
       { status: 503 }

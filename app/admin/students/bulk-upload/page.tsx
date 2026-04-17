@@ -101,9 +101,10 @@ Jane,Smith,jane.smith@example.com,0987654321,securepass456,Bulk upload test 2`
         router.push("/admin/students")
       }, 2000)
 
-    } catch (err: any) {
-      console.error("Bulk upload error:", err)
-      setError(err.message || "Failed to upload students. Please check your CSV format.")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Bulk upload error:", message)
+      setError(message || "Failed to upload students. Please check your CSV format.")
     } finally {
       setIsUploading(false)
     }

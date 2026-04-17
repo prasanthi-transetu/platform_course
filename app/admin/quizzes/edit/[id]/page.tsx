@@ -251,7 +251,7 @@ export default function EditQuizPage() {
               {questions.length === 0 && (
                 <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center">
                   <p className="text-sm font-semibold text-slate-700">No questions added yet</p>
-                  <p className="mt-1 text-xs text-slate-500">Click "Add Question" to start building your quiz.</p>
+                  <p className="mt-1 text-xs text-slate-500">Click &quot;Add Question&quot; to start building your quiz.</p>
                 </div>
               )}
               <div className="flex flex-wrap gap-2 pt-1">

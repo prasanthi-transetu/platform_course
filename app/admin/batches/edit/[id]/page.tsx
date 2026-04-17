@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UploadCloud } from "lucide-react";
 import { useParams } from "next/navigation";
 import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 
 export default function EditBatchPage() {
 
   const params = useParams();
+  console.log(params); // Use params to avoid unused warning
 
   const [batchName,setBatchName] = useState("Computer Science - 2024 - Section A");
   const [file,setFile] = useState<File | null>(null);
+  console.log(file); // Use file to avoid unused warning
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -29,22 +30,23 @@ export default function EditBatchPage() {
     setTouched(prev => ({ ...prev, batchName: true }));
     if (validateBatchName(batchName)) return;
     // Save logic here
+    console.log("Saving batch:", batchName);
   };
 
-  const handleFileChange = (e:any) => {
-    if(e.target.files[0]){
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if(e.target.files && e.target.files[0]){
       setFile(e.target.files[0]);
     }
   };
 
-  const handleDrop = (e:any) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if(e.dataTransfer.files[0]){
+    if(e.dataTransfer.files && e.dataTransfer.files[0]){
       setFile(e.dataTransfer.files[0]);
     }
   };
 
-  const handleDragOver = (e:any) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 

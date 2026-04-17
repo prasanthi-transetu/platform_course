@@ -28,18 +28,31 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (student && isOpen) {
-      setFormData({
-        firstName: student.first_name || "",
-        lastName: student.last_name || "",
-        email: student.email || "",
-        mobile: student.mobile_number || "",
-        password: "", // Don't pre-fill password
-        notes: student.notes || "",
-        status: (student.status?.toLowerCase() as "active" | "inactive") || "active"
-      });
-    }
-  }, [student, isOpen]);
+    const loadStudent = async () => {
+      if (!studentId || !isOpen) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchStudent(studentId);
+        
+        setFormData({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: data.email || "",
+          mobile: data.mobile_number || "",
+          password: "", // Don't pre-fill password
+          notes: data.notes || "",
+          status: (data.status?.toLowerCase() as "active" | "inactive") || "active"
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message);
+        setError(message || "Failed to load student data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   useEffect(() => {
     if (queryError) {
@@ -67,9 +80,12 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
       await updateStudent({ id: studentId, data: formData });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong updating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong updating the student");
+    } finally {
+      setIsUpdating(false);
     }
   };
 

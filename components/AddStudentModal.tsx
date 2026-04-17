@@ -53,9 +53,12 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
       await createStudent(payload);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong creating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong creating the student");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

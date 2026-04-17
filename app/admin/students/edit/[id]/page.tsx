@@ -25,15 +25,31 @@ export default function EditStudentPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (student) {
-      setFormData({
-        firstName: student.first_name || "",
-        lastName: student.last_name || "",
-        email: student.email || "",
-        mobile: student.mobile_number || "",
-        password: "",
-        notes: student.notes || "",
-      });
+    const loadStudent = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchStudent(studentId);
+
+        setFormData({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: data.email || "",
+          mobile: data.mobile_number || "",
+          password: "",
+          notes: data.notes || "",
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message);
+        setError(message || "Failed to load student data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (studentId) {
+      loadStudent();
     }
   }, [student]);
 
@@ -59,9 +75,12 @@ export default function EditStudentPage() {
     try {
       await updateStudent({ id: studentId, data: formData });
       router.push("/admin/students");
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong updating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong updating the student");
+    } finally {
+      setIsUpdating(false);
     }
   };
 

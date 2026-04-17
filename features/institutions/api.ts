@@ -15,6 +15,22 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const message = err.message || err.detail || "API request failed";
+    
+    if (message.toLowerCase().includes("token expired") || response.status === 401) {
+      if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        window.location.href = "/login";
+      }
+    }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
 export interface InstitutionContact {
   name: string;
   role: string;
@@ -47,24 +63,19 @@ export interface UpdateInstitutionPayload {
   contacts?: InstitutionContact[];
 }
 
-// Fetch all institutions
-export async function fetchInstitutions(): Promise<Institution[]> {
-  const response = await fetch(BASE_URL, { headers: getAuthHeaders() });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Failed to fetch institutions");
-  }
-  return response.json();
+// Fetch all institutions or search by query
+export async function fetchInstitutions(search?: string): Promise<Institution[]> {
+  const url = search 
+    ? `${BASE_URL}?search=${encodeURIComponent(search)}` 
+    : BASE_URL;
+  const response = await fetch(url, { headers: getAuthHeaders() });
+  return handleResponse(response);
 }
 
 // Fetch a single institution by ID
 export async function fetchInstitutionById(id: string): Promise<Institution> {
   const response = await fetch(`${BASE_URL}/${id}`, { headers: getAuthHeaders() });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Failed to fetch institution");
-  }
-  return response.json();
+  return handleResponse(response);
 }
 
 // Create a new institution
@@ -74,11 +85,7 @@ export async function createInstitution(data: CreateInstitutionPayload): Promise
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Failed to create institution");
-  }
-  return response.json();
+  return handleResponse(response);
 }
 
 // Update an institution
@@ -88,11 +95,7 @@ export async function updateInstitution(id: string, data: UpdateInstitutionPaylo
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Failed to update institution");
-  }
-  return response.json();
+  return handleResponse(response);
 }
 
 // Delete an institution
@@ -102,7 +105,6 @@ export async function deleteInstitution(id: string): Promise<void> {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || err.detail || "Failed to delete institution");
+    return handleResponse(response);
   }
 }

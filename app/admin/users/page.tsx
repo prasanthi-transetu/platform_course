@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { X, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { X, Pencil, Trash2, Eye, EyeOff, Loader2, Plus, Search, MoreVertical } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";
+import { createUser, fetchUsers, deleteUser, updateUser, fetchUserById, User, fetchAdminCount, fetchRepresentativeCount, fetchInstitutionCount } from "@/features/users/api";
 
 interface UserData {
   id: string;
   name: string;
   email: string;
   role: string;
+  institution: string;
   joinedDate: string;
   avatar: string;
+  status: string;
 }
 
 export default function UsersPage() {
@@ -21,17 +23,105 @@ export default function UsersPage() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [adminCount, setAdminCount] = useState<number | string>("...");
+  const [representativeCount, setRepresentativeCount] = useState<number | string>("...");
+  const [institutionCount, setInstitutionCount] = useState<number | string>("...");
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserData | null>(null);
-  const [deleteUser, setDeleteUser] = useState<UserData | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
+  const [viewUser, setViewUser] = useState<User | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Institution Representative", institution: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "", institution: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    setIsFetching(true);
+    try {
+      // Fetch users, admin count, representative count and institution count in parallel
+      const [result, count, repCount, instCount] = await Promise.all([
+        fetchUsers(),
+        fetchAdminCount().catch(err => {
+          console.error("Admin count fetch failed:", err);
+          return 0; // Fallback to 0
+        }),
+        fetchRepresentativeCount().catch(err => {
+          console.error("Representative count fetch failed:", err);
+          return 0; // Fallback to 0
+        }),
+        fetchInstitutionCount().catch(err => {
+          console.error("Institution count fetch failed:", err);
+          return 0; // Fallback to 0
+        })
+      ]);
+      
+      console.log("Raw API response:", result);
+      console.log("Admin count:", count);
+      console.log("Representative count:", repCount);
+      console.log("Institution count:", instCount);
+      setAdminCount(count);
+      setRepresentativeCount(repCount);
+      setInstitutionCount(instCount);
+      
+      // Handle different possible response structures
+      const usersArray = Array.isArray(result) ? result : (result?.data || result?.users || []);
+      
+      if (Array.isArray(usersArray)) {
+        const mappedUsers = usersArray.map((u: User) => {
+          let status = u.status;
+          if (!status) {
+            const idStr = u.id?.toString() || "";
+            status = idStr.startsWith("REQ-") ? "pending" : "active";
+          }
+
+          // Normalize role for UI dropdown matching
+          let role = u.role || "N/A";
+          const lowerRole = role.toLowerCase();
+          if (lowerRole.includes("institution rep")) {
+            role = "Institution Representative";
+          } else if (lowerRole === "admin") {
+            role = "Admin";
+          } else if (lowerRole === "tutor") {
+            role = "Tutor";
+          }
+
+          return {
+            id: u.id?.toString() || "N/A",
+            name: u.full_name || u.name || "N/A",
+            email: u.email || "N/A",
+            role: role,
+            institution: u.institution || "N/A",
+            joinedDate: u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A",
+            avatar: `https://i.pravatar.cc/150?u=${u.id}`,
+            status: status
+          };
+        });
+        console.log("Mapped users for UI:", mappedUsers);
+        setUsers(mappedUsers);
+      } else {
+        console.warn("API returned non-array data for users:", result);
+        setUsers([]);
+      }
+    } catch (error: unknown) {
+      console.error("Error loading users:", error);
+      setUsers([]);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const validateField = (field: string, value: string, isEdit = false): string => {
     let error = "";
@@ -42,7 +132,11 @@ export default function UsersPage() {
     }
     if (field === "password" && !isEdit && isEmpty(value)) error = "Password is required";
     if (field === "role" && isEmpty(value)) error = "Role is required";
-    if (field === "institution" && isEmpty(value)) error = "Institution is required";
+    if (field === "institution" && isEmpty(value) && !isEdit) error = "Institution is required";
+    // For edit, we allow empty institution if it's N/A or admin
+    if (field === "institution" && isEdit && isEmpty(value)) {
+       // Only require if not admin (but UI shows N/A anyway)
+    }
     
     setErrors(prev => {
       if (error) return { ...prev, [field]: error };
@@ -63,98 +157,144 @@ export default function UsersPage() {
     return !hasError;
   };
 
-  const handleCreateSubmit = () => {
+  const handleCreateSubmit = async () => {
     if (handleValidation(false)) {
-      setIsCreateModalOpen(false);
-      alert("User created successfully!");
+      setIsLoading(true);
+      try {
+        // Map the role back to what the backend expects (lowercase)
+        let apiRole = formData.role.toLowerCase();
+        if (apiRole.includes("institution representative")) {
+          apiRole = "institution_rep";
+        }
+        
+        const payload: Record<string, unknown> = {
+          full_name: formData.name,
+          name: formData.name, // Send both to be safe
+          email: formData.email,
+          password: formData.password,
+          role: apiRole,
+          institution: (formData.institution === "N/A" || !formData.institution) ? "" : formData.institution
+        };
+
+        // Clean payload: remove undefined values
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
+        });
+
+        console.log("Creating user with payload:", payload);
+        await createUser(payload as Record<string, unknown>);
+        setIsCreateModalOpen(false);
+        loadUsers(); // Refresh the list
+        alert("User created successfully!");
+      } catch (error: unknown) {
+        console.error("Create user error details:", error);
+        const message = error instanceof Error ? error.message : "Failed to create user";
+        alert(`Error: ${message}`);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleEditSubmit = () => {
-    if (handleValidation(true)) {
-      setEditUser(null);
-      alert("User updated successfully!");
+  const handleEditSubmit = async () => {
+    if (handleValidation(true) && editUser) {
+      setIsLoading(true);
+      try {
+        // Map the role back to what the backend expects (lowercase)
+        let apiRole = formData.role.toLowerCase();
+        if (apiRole.includes("institution representative")) {
+          apiRole = "institution_rep";
+        }
+        
+        // ONLY send fields that the backend expects for an update
+        // Using PUT as required by the backend. 
+        // We align with create payload structure to avoid 400 errors.
+        const payload: Record<string, unknown> = {
+          full_name: formData.name,
+          name: formData.name, // Include both for compatibility
+          email: formData.email,
+          role: apiRole,
+          institution: (formData.institution === "N/A" || !formData.institution) ? "" : formData.institution
+        };
+
+        // Only add password if changed and not empty
+        if (formData.password && formData.password.trim() !== "") {
+          payload.password = formData.password;
+        }
+
+        // Clean payload: remove undefined values
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
+        });
+
+        console.log("Updating user (PUT):", editUser.id, "with payload:", payload);
+
+        await updateUser(editUser.id, payload as Record<string, unknown>);
+        setEditUser(null);
+        loadUsers(); // Refresh the list
+        alert("User updated successfully!");
+      } catch (error: unknown) {
+        console.error("Update user error details:", error);
+        const message = error instanceof Error ? error.message : "Failed to update user";
+        alert(`Error: ${message}`);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleDeleteSubmit = () => {
-    setDeleteUser(null);
-    alert("User deleted successfully!");
+  const handleDeleteSubmit = async () => {
+    if (userToDelete) {
+      setIsLoading(true);
+      try {
+        await deleteUser(userToDelete.id);
+        setUserToDelete(null);
+        loadUsers(); // Refresh the list
+        alert("User deleted successfully!");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Failed to delete user";
+        alert(message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
-  const acceptedUsers: UserData[] = [
-    {
-      id: "USR-101",
-      name: "Robert Fox",
-      email: "robert.fox@example.com",
-      role: "Admin",
-      joinedDate: "Jan 12, 2024",
-      avatar: "https://i.pravatar.cc/150?u=robert",
-    },
-    {
-      id: "USR-102",
-      name: "Jane Cooper",
-      email: "jane.c@lmspost.com",
-      role: "Institution Rep",
-      joinedDate: "Feb 05, 2024",
-      avatar: "https://i.pravatar.cc/150?u=jane",
-    },
-    {
-      id: "USR-103",
-      name: "Cody Fisher",
-      email: "cody.f@lmspost.com",
-      role: "Admin",
-      joinedDate: "Mar 15, 2024",
-      avatar: "https://i.pravatar.cc/150?u=cody",
-    },
-    {
-      id: "USR-104",
-      name: "Kristin Watson",
-      email: "kristin.w@lms... ",
-      role: "Admin",
-      joinedDate: "Apr 10, 2024",
-      avatar: "https://i.pravatar.cc/150?u=kristin",
-    },
-    {
-      id: "USR-105",
-      name: "Cameron Williamson",
-      email: "cameron.w@i...",
-      role: "Institution Rep",
-      joinedDate: "May 22, 2024",
-      avatar: "https://i.pravatar.cc/150?u=cameron",
-    },
-  ];
+  const handleViewUser = async (id: string) => {
+    setIsViewing(true);
+    setIsViewModalOpen(true);
+    try {
+      const data = await fetchUserById(id);
+      setViewUser(data);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch user details";
+      alert(message);
+      setIsViewModalOpen(false);
+    } finally {
+      setIsViewing(false);
+    }
+  };
 
-  const pendingUsers: UserData[] = [
-    {
-      id: "REQ-201",
-      name: "Eleanor Pena",
-      email: "eleanor.p@test.com",
-      role: "Admin",
-      joinedDate: "Requested: Oct 01, 2024",
-      avatar: "https://i.pravatar.cc/150?u=eleanor",
-    },
-    {
-      id: "REQ-202",
-      name: "Guy Hawkins",
-      email: "guy.h@demo.org",
-      role: "Institution Rep",
-      joinedDate: "Requested: Oct 02, 2024",
-      avatar: "https://i.pravatar.cc/150?u=guy",
-    },
-  ];
-
-  const roles = ["All Roles", "Admin", "Institution Rep"];
-
-  const currentData = activeTab === "accepted" ? acceptedUsers : pendingUsers;
+  const roles = ["All Roles", "Admin", "Institution Representative", "Tutor"];
+  const currentData = users; // Use real data from API
 
   const filtered = currentData.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Roles are already normalized in loadUsers
     const matchesRole = roleFilter === "All Roles" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
+
+    // Filter by tab status
+    const matchesTab = activeTab === "accepted" ? u.status === "active" : u.status === "pending";
+
+    return matchesSearch && matchesRole && matchesTab;
   });
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
@@ -178,9 +318,7 @@ export default function UsersPage() {
           onClick={() => { setFormData({ name: "", email: "", password: "", role: "Institution Representative", institution: "" }); setErrors({}); setTouched({}); setIsCreateModalOpen(true); }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium shadow transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-4 h-4" />
           Create New User
         </button>
       </div>
@@ -195,7 +333,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Total Admins <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">24</h2>
+            <h2 className="text-3xl font-bold">{adminCount}</h2>
           </div>
         </div>
 
@@ -207,7 +345,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Institution Representatives <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">38</h2>
+            <h2 className="text-3xl font-bold">{representativeCount}</h2>
           </div>
         </div>
 
@@ -219,7 +357,7 @@ export default function UsersPage() {
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1 flex items-center gap-1">Total Institutions <span className="w-3 h-3 text-gray-300 border border-current rounded-full inline-flex items-center justify-center text-[8px]">i</span></p>
-            <h2 className="text-3xl font-bold">12</h2>
+            <h2 className="text-3xl font-bold">{institutionCount}</h2>
           </div>
         </div>
       </div>
@@ -249,9 +387,7 @@ export default function UsersPage() {
 
           <div className="flex items-center gap-4 w-full lg:w-auto">
             <div className="relative w-full lg:w-80">
-              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               <input
                 placeholder="Search by name, email, or User ID..."
                 value={searchQuery}
@@ -282,14 +418,21 @@ export default function UsersPage() {
         </div>
 
         {/* TABLE */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[300px] relative">
+          {isFetching && (
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 backdrop-blur-[1px]">
+               <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          )}
           <table className="w-full text-sm text-left">
             <thead className="text-gray-500 font-medium border-b border-gray-100">
               <tr>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">USER ID</th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">USER</th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">ROLE</th>
-                <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">JOINED DATE</th>
+                <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase">
+                  {activeTab === "accepted" ? "JOINED DATE" : "REQUESTED DATE"}
+                </th>
                 <th className="pb-4 px-4 font-semibold text-xs tracking-wider uppercase text-center w-24">ACTION</th>
               </tr>
             </thead>
@@ -313,17 +456,17 @@ export default function UsersPage() {
 
                   <td className="py-4 px-4 text-gray-700 font-medium">{u.role}</td>
 
-                  <td className="py-4 px-4 text-gray-500">{u.joinedDate}</td>
+                  <td className="py-4 px-4 text-gray-500">
+                    {activeTab === "pending" ? `Requested: ${u.joinedDate}` : u.joinedDate}
+                  </td>
 
                   {/* ACTION */}
                   <td className="py-4 px-4 text-center relative">
                     <button
-                      className="text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
                       onClick={() => setOpenMenu(openMenu === u.id ? null : u.id)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
+                      <MoreVertical size={16} className="text-gray-400" />
                     </button>
 
                     {openMenu === u.id && (
@@ -347,15 +490,41 @@ export default function UsersPage() {
                            <>
                               <button
                                 onClick={() => {
-                                  setFormData({ name: u.name, email: u.email, password: "", role: u.role, institution: "" });
-                                  setErrors({}); setTouched({}); setEditUser(u); setOpenMenu(null);
+                                  handleViewUser(u.id);
+                                  setOpenMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Eye size={14} className="text-gray-500" /> View Details
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  setOpenMenu(null);
+                                  setIsLoading(true);
+                                  try {
+                                    const fullUser = await fetchUserById(u.id);
+                                    setFormData({ 
+                                      name: fullUser.full_name || fullUser.name || u.name, 
+                                      email: fullUser.email || u.email, 
+                                      password: "", 
+                                      role: u.role, 
+                                      institution: fullUser.institution || u.institution 
+                                    });
+                                    setErrors({}); 
+                                    setTouched({}); 
+                                    setEditUser(u);
+                                  } catch (error) {
+                                    alert("Failed to fetch user details for editing");
+                                  } finally {
+                                    setIsLoading(false);
+                                  }
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <Pencil size={14} className="text-gray-500" /> Edit
                               </button>
                               <button
-                                onClick={() => { setDeleteUser(u); setOpenMenu(null); }}
+                                onClick={() => { setUserToDelete(u); setOpenMenu(null); }}
                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                               >
                                 <Trash2 size={14} className="text-red-500" /> Delete
@@ -498,17 +667,15 @@ export default function UsersPage() {
                 {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
-                <select
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Institution <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
                   value={formData.institution}
                   onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, false);}}
-                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
-                >
-                  <option value="">Search and select institution...</option>
-                  <option>Global Tech Institute</option>
-                  <option>LMS Portal Academy</option>
-                </select>
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="Enter institution name"
+                />
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
@@ -516,8 +683,18 @@ export default function UsersPage() {
               <button onClick={() => setIsCreateModalOpen(false)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
                 Cancel
               </button>
-              <button onClick={handleCreateSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
-                Create User
+              <button 
+                onClick={handleCreateSubmit} 
+                disabled={isLoading}
+                className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Creating...
+                  </>
+                ) : (
+                  "Create User"
+                )}
               </button>
             </div>
           </div>
@@ -588,17 +765,15 @@ export default function UsersPage() {
                 {touched.role && errors.role && <p className={errorTextClass}>{errors.role}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Select Institution <span className="text-red-500">*</span></label>
-                <select
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Institution <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
                   value={formData.institution}
                   onChange={(e) => { setFormData(p => ({ ...p, institution: e.target.value })); if(errors.institution){setErrors(p=>{const n={...p};delete n.institution;return n;})} }}
                   onBlur={() => {setTouched(p => ({...p, institution: true})); validateField("institution", formData.institution, true);}}
-                  className={`w-full border bg-white rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
-                >
-                  <option value="">Search and select institution...</option>
-                  <option>Global Tech Institute</option>
-                  <option>LMS Portal Academy</option>
-                </select>
+                  className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-100 ${touched.institution && errors.institution ? inputErrorClass : "border-gray-200"}`}
+                  placeholder="Enter institution name"
+                />
                 {touched.institution && errors.institution && <p className={errorTextClass}>{errors.institution}</p>}
               </div>
             </div>
@@ -606,8 +781,18 @@ export default function UsersPage() {
               <button onClick={() => setEditUser(null)} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
                 Cancel
               </button>
-              <button onClick={handleEditSubmit} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
-                Save Changes
+              <button 
+                onClick={handleEditSubmit} 
+                disabled={isLoading}
+                className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </button>
             </div>
           </div>
@@ -615,24 +800,98 @@ export default function UsersPage() {
       )}
 
       {/* CONFIRM DELETE MODAL */}
-      {deleteUser && (
+      {userToDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 pb-4">
               <h2 className="text-xl font-bold text-gray-900">Confirm Delete</h2>
-              <button onClick={() => setDeleteUser(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setUserToDelete(null)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 pt-0">
-              <p className="text-sm text-gray-600">Are you sure you want to delete user {deleteUser.name}?</p>
+              <p className="text-sm text-gray-600">Are you sure you want to delete user {userToDelete.name}?</p>
             </div>
             <div className="flex justify-center gap-3 p-6 pt-0">
-              <button onClick={() => setDeleteUser(null)} className="px-6 py-2 border border-gray-200 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+              <button onClick={() => setUserToDelete(null)} className="px-6 py-2 border border-gray-200 text-sm font-medium text-gray-700 bg-white rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                 Cancel
               </button>
               <button onClick={handleDeleteSubmit} className="px-6 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm transition-colors flex items-center gap-2">
                 <Trash2 size={16} /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* VIEW USER MODAL */}
+      {isViewModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">User Details</h2>
+              <button onClick={() => setIsViewModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {isViewing ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  <p className="text-sm text-gray-500">Fetching user details...</p>
+                </div>
+              ) : viewUser ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 pb-4 border-b border-gray-50">
+                    <div className="relative w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-50">
+                      <span className="text-2xl font-bold text-blue-600">
+                        {(viewUser.full_name || viewUser.name || "N").charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{viewUser.full_name || viewUser.name || "N/A"}</h3>
+                      <p className="text-sm text-gray-500">{viewUser.role}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                      <p className="text-gray-900 font-medium">{viewUser.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">User ID</p>
+                      <p className="text-gray-900 font-medium">{viewUser.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Institution</p>
+                      <p className="text-gray-900 font-medium">{viewUser.institution || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Created At</p>
+                      <p className="text-gray-900 font-medium">
+                        {viewUser.created_at ? new Date(viewUser.created_at).toLocaleString() : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        viewUser.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {viewUser.status || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-4">No user data found.</p>
+              )}
+            </div>
+            <div className="p-6 pt-0 flex justify-end">
+              <button 
+                onClick={() => setIsViewModalOpen(false)} 
+                className="px-6 py-2 bg-gray-100 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>

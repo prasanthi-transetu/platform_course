@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useStudent, useDeleteStudent } from "@/features/students/api"
+import { fetchStudent, deleteStudent, type Student } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
   const params = useParams()
   const router = useRouter()
   const studentId = params.id as string
 
+  const [student, setStudent] = useState<Student | null>(null)
   const [associatedBatch, setAssociatedBatch] = useState(false) // controls Delete button
   const [checkboxChecked, setCheckboxChecked] = useState(false) // checkbox state
 
@@ -17,8 +18,19 @@ export default function DeleteStudentPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (queryError) {
-      setError((queryError as any).message || "Failed to load student data")
+    const loadStudent = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await fetchStudent(studentId)
+        setStudent(data)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message)
+        setError(message || "Failed to load student data")
+      } finally {
+        setIsLoading(false)
+      }
     }
   }, [queryError])
 
@@ -34,9 +46,12 @@ export default function DeleteStudentPage() {
       setError(null)
       await deleteStudent(studentId)
       router.push("/admin/students")
-    } catch (err: any) {
-      console.error("Error deleting student:", err)
-      setError(err.message || "Failed to delete student. Please try again.")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Error deleting student:", message)
+      setError(message || "Failed to delete student. Please try again.")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
