@@ -32,7 +32,6 @@ export async function PUT(
     const { id } = await params;
     const authHeader = request.headers.get("Authorization");
     const body = await request.json();
-    const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "PUT",
       headers: { 

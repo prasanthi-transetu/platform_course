@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Users, UserCheck, BookOpen, MoreVertical } from "lucide-react"
-import { fetchStudents, fetchActiveStudentCount, type Student } from "@/features/students/api"
+import { useStudents, useStudentCounts, type Student } from "@/features/students/api"
 import Link from "next/link"
 import AddStudentModal from "@/components/AddStudentModal"
 import EditStudentModal from "@/components/EditStudentModal"
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
@@ -34,39 +33,9 @@ export default function StudentsPage() {
     error: queryError 
   } = useStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter);
 
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        
-        // Fetch list and active count in parallel
-        const [studentsData, activeCount] = await Promise.all([
-          fetchStudents(currentPage, itemsPerPage, debouncedSearch, statusFilter, courseFilter),
-          fetchActiveStudentCount()
-        ])
-        
-        setStudents(studentsData.students)
-        setApiTotalPages(studentsData.totalPages)
-        setApiTotalStudents(studentsData.total)
-        setActiveStudentsCount(activeCount)
-        setError(null)
-        setIsRateLimited(false)
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error("Error fetching student data:", err)
-        
-        // Handle Rate Limiting (429) specifically
-        if (message.includes("429") || message.includes("Too many requests")) {
-          setIsRateLimited(true)
-          setError("Too many requests from this IP. Please wait 15 minutes before refreshing.")
-        } else {
-          setError(message || "Failed to load students. Please ensure your backend is running.")
-        }
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { data: countsData } = useStudentCounts();
 
-  const students = studentsData?.students || []
+  const students: Student[] = studentsData?.students || studentsData?.data || [];
   const apiTotalPages = studentsData?.totalPages || 1
   const apiTotalStudents = countsData?.total || 0
   const activeStudentsCount = countsData?.active || 0
@@ -328,14 +297,14 @@ export default function StudentsPage() {
       <AddStudentModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSuccess={() => { setIsModalOpen(false); triggerRefresh(); }} 
+        onSuccess={() => setIsModalOpen(false)} 
       />
 
       <EditStudentModal
         studentId={editingStudentId}
         isOpen={editingStudentId !== null}
         onClose={() => setEditingStudentId(null)}
-        onSuccess={() => { setEditingStudentId(null); triggerRefresh(); }}
+        onSuccess={() => setEditingStudentId(null)}
       />
     </div>
   )

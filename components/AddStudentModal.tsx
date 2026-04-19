@@ -57,8 +57,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess }: AddStude
       const message = err instanceof Error ? err.message : String(err);
       console.error(message);
       setError(message || "Something went wrong creating the student");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

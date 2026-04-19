@@ -2,35 +2,23 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { fetchStudent, deleteStudent, type Student } from "@/features/students/api"
+import { useStudent, useDeleteStudent, type Student } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
   const params = useParams()
   const router = useRouter()
   const studentId = params.id as string
 
-  const [student, setStudent] = useState<Student | null>(null)
   const [associatedBatch, setAssociatedBatch] = useState(false) // controls Delete button
   const [checkboxChecked, setCheckboxChecked] = useState(false) // checkbox state
 
   const { data: student, isLoading, error: queryError } = useStudent(studentId)
-  const { mutateAsync: deleteStudent, isPending: isDeleting } = useDeleteStudent()
+  const { mutateAsync: deleteStudentMutation, isPending: isDeleting } = useDeleteStudent()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const loadStudent = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const data = await fetchStudent(studentId)
-        setStudent(data)
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error("Error fetching student:", message)
-        setError(message || "Failed to load student data")
-      } finally {
-        setIsLoading(false)
-      }
+    if (queryError) {
+      setError((queryError as any).message || "Failed to load student data")
     }
   }, [queryError])
 
@@ -44,14 +32,12 @@ export default function DeleteStudentPage() {
     
     try {
       setError(null)
-      await deleteStudent(studentId)
+      await deleteStudentMutation(studentId)
       router.push("/admin/students")
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error("Error deleting student:", message)
       setError(message || "Failed to delete student. Please try again.")
-    } finally {
-      setIsDeleting(false)
     }
   }
 
