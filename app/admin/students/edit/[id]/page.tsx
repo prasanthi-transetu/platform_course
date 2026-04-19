@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { X, Eye, EyeOff } from "lucide-react";
-import { fetchStudent, updateStudent as updateStudentApi } from "@/features/students/api";
+import { useStudent, useUpdateStudent } from "@/features/students/api";
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -20,8 +20,8 @@ export default function EditStudentPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { data: student, isLoading, error: queryError } = useStudent(studentId);
+  const { mutateAsync: updateStudent, isPending: isUpdating } = useUpdateStudent();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,9 +39,10 @@ export default function EditStudentPage() {
           password: "",
           notes: data.notes || "",
         });
-      } catch (err: any) {
-        console.error("Error fetching student:", err);
-        setError(err.message || "Failed to load student data");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message);
+        setError(message || "Failed to load student data");
       } finally {
         setIsLoading(false);
       }
@@ -50,7 +51,13 @@ export default function EditStudentPage() {
     if (studentId) {
       loadStudent();
     }
-  }, [studentId]);
+  }, [student]);
+
+  useEffect(() => {
+    if (queryError) {
+      setError((queryError as any).message || "Failed to load student data");
+    }
+  }, [queryError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,21 +65,20 @@ export default function EditStudentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUpdating(true);
     setError(null);
 
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.mobile) {
       setError("Please fill in all required fields.");
-      setIsUpdating(false);
       return;
     }
 
     try {
-      await updateStudentApi(studentId, formData);
+      await updateStudent({ id: studentId, data: formData });
       router.push("/admin/students");
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong updating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong updating the student");
     } finally {
       setIsUpdating(false);
     }

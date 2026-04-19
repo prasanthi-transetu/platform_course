@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
-const BACKEND_URL = process.env.BACKEND_API_URL || `${API_HOST}/api/v1/institutions`;
+const BACKEND_URL = `${API_HOST}/api/v1/users`;
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search");
   const authHeader = request.headers.get("Authorization");
   
   try {
-    let url = BACKEND_URL;
-    if (search) {
-      url = `${BACKEND_URL}/search?search=${encodeURIComponent(search)}`;
-    }
-
-    const response = await fetch(url, {
+    const response = await fetch(BACKEND_URL, {
       headers: { 
         "Content-Type": "application/json",
         ...(authHeader ? { "Authorization": authHeader } : {})
@@ -22,17 +15,21 @@ export async function GET(request: NextRequest) {
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error("GET Institutions proxy error:", error);
-    return NextResponse.json({ message: "Failed to fetch institutions from backend" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`GET Users proxy error [${BACKEND_URL}]:`, message);
+    return NextResponse.json(
+      { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
+      { status: 503 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
+  
   try {
     const body = await request.json();
-    const authHeader = request.headers.get("Authorization");
     const response = await fetch(BACKEND_URL, {
       method: "POST",
       headers: { 
@@ -41,10 +38,15 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(body),
     });
+    
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error("POST Institution proxy error:", error);
-    return NextResponse.json({ message: "Failed to create institution in backend" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`POST Users proxy error [${BACKEND_URL}]:`, message);
+    return NextResponse.json(
+      { message: "Unable to connect to your backend. Ensure the backend is running at " + BACKEND_URL },
+      { status: 503 }
+    );
   }
 }

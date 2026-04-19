@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
-import { fetchStudent, updateStudent } from "@/features/students/api";
+import { useStudent, useUpdateStudent } from "@/features/students/api";
 
 interface EditStudentModalProps {
   studentId: string | number | null;
@@ -23,8 +23,8 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const { data: student, isLoading, error: queryError } = useStudent(studentId || "");
+  const { mutateAsync: updateStudent, isPending: isUpdating } = useUpdateStudent();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,16 +45,20 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
           notes: data.notes || "",
           status: (data.status?.toLowerCase() as "active" | "inactive") || "active"
         });
-      } catch (err: any) {
-        console.error("Error fetching student:", err);
-        setError(err.message || "Failed to load student data");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message);
+        setError(message || "Failed to load student data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadStudent();
-  }, [studentId, isOpen]);
+  useEffect(() => {
+    if (queryError) {
+      setError((queryError as any).message || "Failed to load student data");
+    }
+  }, [queryError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -64,23 +68,22 @@ export default function EditStudentModal({ studentId, isOpen, onClose, onSuccess
     e.preventDefault();
     if (!studentId) return;
     
-    setIsUpdating(true);
     setError(null);
 
     // Basic Validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.mobile) {
       setError("Please fill in all required fields.");
-      setIsUpdating(false);
       return;
     }
 
     try {
-      await updateStudent(studentId, formData);
+      await updateStudent({ id: studentId, data: formData });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Something went wrong updating the student");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message);
+      setError(message || "Something went wrong updating the student");
     } finally {
       setIsUpdating(false);
     }

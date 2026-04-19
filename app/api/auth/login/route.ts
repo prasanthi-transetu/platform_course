@@ -14,18 +14,35 @@ export async function POST(request: NextRequest) {
     // If a backend URL is configured, proxy the request to it
     const apiHost = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
     const backendUrl = process.env.BACKEND_AUTH_URL || `${apiHost}/auth/login`;
-    if (backendUrl) {
+        if (backendUrl) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
         const backendResponse = await fetch(backendUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
-        const data = await backendResponse.json();
-        return NextResponse.json(data, { status: backendResponse.status });
+        try {
+          const data = await backendResponse.json();
+          return NextResponse.json(data, { status: backendResponse.status });
+        } catch (e) {
+          // If backend returned something non-JSON, only fallback if it was a server error
+          if (backendResponse.status >= 500) {
+            throw new Error("Backend server error");
+          }
+          return NextResponse.json(
+            { message: "Backend response error" },
+            { status: backendResponse.status }
+          );
+        }
       } catch (error) {
-        console.warn("Backend unreachable, falling back to local auth:", error);
+        console.warn("Backend unreachable or timed out, falling back to local auth:", error);
       }
     }
 

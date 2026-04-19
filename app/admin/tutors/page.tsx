@@ -176,87 +176,80 @@ export default function TutorsPage() {
 
           <tbody>
             {visibleData.map((tutor) => (
-              <tr key={tutor.id} className="border-t hover:bg-gray-50">
+              <tr key={tutor.id} className="border-b hover:bg-gray-50 transition">
                 <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {tutor.name}
-                      </p>
-                      <p className="text-xs text-gray-700">ID: #{tutor.id}</p>
-                    </div>
-                  </div>
+                  <p className="font-bold text-gray-900 leading-tight">
+                    {tutor.name}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5 font-medium">
+                    ID: {tutor.id}
+                  </p>
                 </td>
-
                 <td className="p-4">
-                  <div className="flex gap-2 flex-wrap">
-                    {tutor.domain.map((d, i) => (
+                  <p className="text-gray-900 font-medium">{tutor.email}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{tutor.phone}</p>
+                </td>
+                <td className="p-4">
+                  <div className="flex gap-1.5 flex-wrap">
+                    {tutor.domain.map((d: string) => (
                       <span
-                        key={i}
-                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium"
+                        key={d}
+                        className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide"
                       >
                         {d}
                       </span>
                     ))}
                   </div>
                 </td>
-
-                <td className="p-4 text-sm text-gray-800">
-                  <p>{tutor.email}</p>
-                  <p className="text-xs text-gray-700">{tutor.phone}</p>
-                </td>
-
                 <td className="p-4">
-                  {tutor.batches.map((b, i) => (
-                    <span
-                      key={i}
-                      className="bg-gray-200 px-2 py-1 text-xs rounded mr-1"
-                    >
-                      {b}
-                    </span>
-                  ))}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {tutor.batches.map((b: string) => (
+                      <span
+                        key={b}
+                        className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide"
+                      >
+                        {b}
+                      </span>
+                    ))}
+                  </div>
                 </td>
-
                 <td className="p-4">
                   <span
-                    className={`text-xs px-2 py-1 rounded font-medium ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide ${
                       tutor.status === "Active"
                         ? "bg-green-100 text-green-700"
-                        : "bg-gray-200 text-gray-600"
+                        : "bg-red-100 text-red-700"
                     }`}
                   >
-                    ● {tutor.status}
+                    {tutor.status}
                   </span>
                 </td>
-
-                <td className="p-4 relative">
-                  <MoreVertical
-                    className="text-gray-600 cursor-pointer"
+                <td className="p-4 text-center relative">
+                  <button
                     onClick={() =>
                       setOpenMenu(openMenu === tutor.id ? null : tutor.id)
                     }
-                  />
+                    className="text-gray-400 hover:text-gray-600 transition p-1"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+
                   {openMenu === tutor.id && (
                     <div
                       ref={menuRef}
-                      className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                      className="absolute right-8 top-10 bg-white shadow-xl border border-gray-100 rounded-lg w-32 py-2 z-10 text-left flex flex-col"
                     >
                       <Link
                         href={`/admin/tutors/edit/${tutor.id}`}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setOpenMenu(null)}
+                        className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-gray-600 hover:bg-slate-50 transition"
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
+                        <Edit size={14} className="text-gray-400" /> Edit
                       </Link>
                       <Link
                         href={`/admin/tutors/delete/${tutor.id}`}
-                        className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        onClick={() => setOpenMenu(null)}
+                        className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 transition"
                       >
-                        <Trash className="w-4 h-4 mr-2" />
-                        Delete
+                        <Trash size={14} className="text-red-400" /> Delete
                       </Link>
                     </div>
                   )}
@@ -322,8 +315,8 @@ export default function TutorsPage() {
 }
 
 /* CARD COMPONENT */
-function Card({ title, value, icon, color = "blue" }: any) {
-  const colorMap: any = {
+function Card({ title, value, icon, color = "blue" }: { title: string; value: string | number; icon: React.ReactNode; color?: string }) {
+  const colorMap: Record<string, string> = {
     blue: "text-blue-600 bg-blue-100",
     green: "text-green-600 bg-green-100",
     yellow: "text-yellow-600 bg-yellow-100",
@@ -337,7 +330,7 @@ function Card({ title, value, icon, color = "blue" }: any) {
         <h2 className="text-2xl font-bold text-gray-900">{value}</h2>
       </div>
 
-      <div className={`p-2 rounded-lg ${colorMap[color]}`}>{icon}</div>
+      <div className={`p-2 rounded-lg ${colorMap[color] || ""}`}>{icon}</div>
     </div>
   );
 }

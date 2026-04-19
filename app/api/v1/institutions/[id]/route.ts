@@ -9,8 +9,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
     });
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
@@ -26,10 +30,15 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const authHeader = request.headers.get("Authorization");
     const body = await request.json();
+    const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        ...(authHeader ? { "Authorization": authHeader } : {})
+      },
       body: JSON.stringify(body),
     });
     const data = await response.json();
@@ -46,8 +55,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const authHeader = request.headers.get("Authorization");
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
+      headers: authHeader ? { "Authorization": authHeader } : {},
     });
     
     // Some APIs return 204 No Content

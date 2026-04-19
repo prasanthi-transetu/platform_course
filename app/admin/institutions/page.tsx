@@ -12,7 +12,7 @@ import {
 
 import Link from "next/link"
 
-import { fetchInstitutions, Institution } from "@/features/institutions/api"
+import { fetchInstitutions, Institution, InstitutionContact } from "@/features/institutions/api"
 
 export default function InstitutionsPage() {
 
@@ -21,29 +21,44 @@ export default function InstitutionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [openContacts, setOpenContacts] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const loadInstitutions = async (query?: string) => {
+    try {
+      setIsLoading(true)
+      const data = await fetchInstitutions(query)
+      setInstitutions(data)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Failed to load institutions:", message)
+      setError(message || "Failed to load institutions")
+      
+      // Fallback to localStorage if API fails (for local testing without backend)
+      const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
+      if (stored.length > 0) {
+        setInstitutions(stored)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadInstitutions = async () => {
-      try {
-        setIsLoading(true)
-        const data = await fetchInstitutions()
-        setInstitutions(data)
-      } catch (err: any) {
-        console.error("Failed to load institutions:", err)
-        setError(err.message || "Failed to load institutions")
-        
-        // Fallback to localStorage if API fails (for local testing without backend)
-        const stored = JSON.parse(localStorage.getItem("institutions") || "[]")
-        if (stored.length > 0) {
-          setInstitutions(stored)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadInstitutions()
   }, [])
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim() !== "") {
+        loadInstitutions(searchQuery)
+      } else {
+        loadInstitutions()
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   return (
 
@@ -148,6 +163,8 @@ export default function InstitutionsPage() {
           type="text"
           placeholder="Search by name, email, or institution ID..."
           className="border rounded-lg px-4 py-2 w-96 text-gray-900 bg-white"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
 
         <select
@@ -263,9 +280,9 @@ export default function InstitutionsPage() {
                          <button onClick={() => setOpenContacts(null)} className="text-gray-400 hover:text-gray-600">✕</button>
                       </div>
                       <div className="max-h-64 overflow-y-auto w-full">
-                        {inst.contacts?.length > 0 ? (
+                        {inst.contacts && inst.contacts.length > 0 ? (
                           <div className="divide-y divide-gray-50">
-                            {inst.contacts.map((contact: any, i: number) => (
+                            {inst.contacts.map((contact: InstitutionContact, i: number) => (
                               <div key={i} className="p-3 hover:bg-gray-50/50 transition-colors">
                                 <p className="text-sm font-medium text-gray-900">{contact.name}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">{contact.email}</p>

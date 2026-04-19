@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { X, Info, LayoutGrid, Plus, Bold, Italic, List, Link as LinkIcon, Code } from "lucide-react";
 
-export default function CreateAssignmentModal({ isOpen, onClose, onSubmit }: any) {
+interface CreateAssignmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Record<string, unknown>) => void;
+}
+
+export default function CreateAssignmentModal({ isOpen, onClose, onSubmit }: CreateAssignmentModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [domain, setDomain] = useState("");

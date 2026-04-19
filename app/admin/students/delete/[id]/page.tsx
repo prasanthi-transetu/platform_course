@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { fetchStudent, deleteStudent } from "@/features/students/api"
+import { fetchStudent, deleteStudent, type Student } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
   const params = useParams()
   const router = useRouter()
   const studentId = params.id as string
 
-  const [student, setStudent] = useState<any>(null)
+  const [student, setStudent] = useState<Student | null>(null)
   const [associatedBatch, setAssociatedBatch] = useState(false) // controls Delete button
   const [checkboxChecked, setCheckboxChecked] = useState(false) // checkbox state
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const { data: student, isLoading, error: queryError } = useStudent(studentId)
+  const { mutateAsync: deleteStudent, isPending: isDeleting } = useDeleteStudent()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -24,21 +24,15 @@ export default function DeleteStudentPage() {
         setError(null)
         const data = await fetchStudent(studentId)
         setStudent(data)
-      } catch (err: any) {
-        console.error("Error fetching student:", err)
-        setError(err.message || "Failed to load student data")
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Error fetching student:", message)
+        setError(message || "Failed to load student data")
       } finally {
         setIsLoading(false)
       }
     }
-
-    if (studentId) {
-      loadStudent()
-    }
-
-    setCheckboxChecked(false)
-    setAssociatedBatch(false)
-  }, [studentId])
+  }, [queryError])
 
   const handleCheckboxChange = () => {
     setCheckboxChecked(!checkboxChecked)
@@ -49,13 +43,13 @@ export default function DeleteStudentPage() {
     if (!student || associatedBatch) return
     
     try {
-      setIsDeleting(true)
       setError(null)
       await deleteStudent(studentId)
       router.push("/admin/students")
-    } catch (err: any) {
-      console.error("Error deleting student:", err)
-      setError(err.message || "Failed to delete student. Please try again.")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Error deleting student:", message)
+      setError(message || "Failed to delete student. Please try again.")
     } finally {
       setIsDeleting(false)
     }
