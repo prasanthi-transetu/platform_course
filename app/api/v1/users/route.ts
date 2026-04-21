@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = "force-dynamic";
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = `${API_HOST}/api/v1/users`;
 
+const getAuth = (req: NextRequest) => req.headers.get("Authorization");
+
+
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
+  const auth = getAuth(request);
   
   try {
     const response = await fetch(BACKEND_URL, {
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
     });
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error: unknown) {
@@ -26,7 +32,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
+  const auth = getAuth(request);
   
   try {
     const body = await request.json();
@@ -34,10 +40,11 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
       body: JSON.stringify(body),
     });
+
     
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });

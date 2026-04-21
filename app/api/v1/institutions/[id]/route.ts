@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = "force-dynamic";
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = process.env.BACKEND_API_URL || `${API_HOST}/api/v1/institutions`;
+
+const getAuth = (req: NextRequest) => req.headers.get("Authorization");
+
 
 export async function GET(
   request: NextRequest,
@@ -9,13 +14,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get("Authorization");
+    const auth = getAuth(request);
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
     });
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
@@ -30,16 +36,17 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get("Authorization");
+    const auth = getAuth(request);
     const body = await request.json();
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
       body: JSON.stringify(body),
     });
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
@@ -54,11 +61,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get("Authorization");
+    const auth = getAuth(request);
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
-      headers: authHeader ? { "Authorization": authHeader } : {},
+      headers: auth ? { "Authorization": auth } : {},
     });
+
     
     // Some APIs return 204 No Content
     if (response.status === 204) {

@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+export const dynamic = "force-dynamic";
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = process.env.BACKEND_STUDENTS_API_URL || `${API_HOST}/api/v1/students`;
+
+const getAuth = (req: NextRequest) => req.headers.get("Authorization");
+
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const authHeader = request.headers.get("Authorization");
+  const auth = getAuth(request);
   
   try {
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
     });
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error: unknown) {
@@ -34,7 +40,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const authHeader = request.headers.get("Authorization");
+  const auth = getAuth(request);
   
   try {
     const body = await request.json();
@@ -42,10 +48,11 @@ export async function PUT(
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
-        ...(authHeader ? { "Authorization": authHeader } : {})
+        ...(auth ? { "Authorization": auth } : {})
       },
       body: JSON.stringify(body),
     });
+
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error: unknown) {
@@ -63,13 +70,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const authHeader = request.headers.get("Authorization");
+  const auth = getAuth(request);
   
   try {
     const response = await fetch(`${BACKEND_URL}/${id}`, {
       method: "DELETE",
-      headers: authHeader ? { "Authorization": authHeader } : {},
+      headers: auth ? { "Authorization": auth } : {},
     });
+
     
     if (response.status === 204) {
       return new NextResponse(null, { status: 204 });

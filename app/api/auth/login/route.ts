@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         try {
           const data = await backendResponse.json();
           return NextResponse.json(data, { status: backendResponse.status });
-        } catch (e) {
+        } catch {
           // If backend returned something non-JSON, only fallback if it was a server error
           if (backendResponse.status >= 500) {
             throw new Error("Backend server error");
