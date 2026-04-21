@@ -247,7 +247,7 @@ export function useCreateStudent() {
 export function useUpdateStudent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string | number; data: any }) => updateStudent(id, data),
+    mutationFn: ({ id, data }: { id: string | number; data: Record<string, unknown> }) => updateStudent(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["student", variables.id] });

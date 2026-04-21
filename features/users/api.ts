@@ -45,27 +45,29 @@ async function handleResponse(response: Response) {
     // Extract as much detail as possible for the error message
     let message = "API request failed";
     if (err && typeof err === 'object') {
-      const errorObj = err as Record<string, any>;
+      const errorObj = err as Record<string, unknown>;
       // Log the error object for debugging
       console.error("Error Object:", errorObj);
       
       // Check for specific 400 Bad Request details
-      if (response.status === 400 && errorObj.message) {
+      if (response.status === 400 && typeof errorObj.message === 'string') {
         message = errorObj.message;
       } else if (errorObj.detail) {
         if (typeof errorObj.detail === 'string') message = errorObj.detail;
         else if (Array.isArray(errorObj.detail)) {
           // Extract more info from pydantic errors
-          message = errorObj.detail.map((d: any) => {
-            const field = d.loc?.join('.') || 'error';
-            return `${field}: ${d.msg} (${d.type})`;
-          }).join(', ');
-        } else if (typeof errorObj.detail === 'object') {
-          message = errorObj.detail.message || errorObj.detail.error || JSON.stringify(errorObj.detail);
+          message = (errorObj.detail as unknown[]).map((d) => {
+            const detailItem = d as Record<string, unknown>;
+            const field = Array.isArray(detailItem.loc) ? detailItem.loc.join('.') : 'error';
+            return `${field}: ${detailItem.msg} (${detailItem.type})`;
+          }).map(String).join(', ');
+        } else if (typeof errorObj.detail === 'object' && errorObj.detail !== null) {
+          const detailObj = errorObj.detail as Record<string, unknown>;
+          message = String(detailObj.message || detailObj.error || JSON.stringify(detailObj));
         }
-      } else if (errorObj.message) {
+      } else if (typeof errorObj.message === 'string') {
         message = errorObj.message;
-      } else if (errorObj.error) {
+      } else if (typeof errorObj.error === 'string') {
         message = errorObj.error;
       }
     }
@@ -168,24 +170,26 @@ export async function fetchInstitutionCount(): Promise<number> {
 /**
  * Helper function to parse count from various API response formats
  */
-function parseCount(result: any): number {
-  if (result && typeof result === 'object') {
+function parseCount(result: unknown): number {
+  if (result && typeof result === 'object' && result !== null) {
+    const resObj = result as Record<string, unknown>;
     // Check nested data first (common in this backend)
-    if (result.data !== undefined) {
-      if (typeof result.data === 'number') return result.data;
-      if (result.data && typeof result.data === 'object' && typeof result.data.count === 'number') {
-        return result.data.count;
+    if (resObj.data !== undefined) {
+      if (typeof resObj.data === 'number') return resObj.data;
+      if (resObj.data && typeof resObj.data === 'object') {
+        const dataObj = resObj.data as Record<string, unknown>;
+        if (typeof dataObj.count === 'number') return dataObj.count;
       }
-      if (typeof result.data === 'string' && !isNaN(Number(result.data))) {
-        return Number(result.data);
+      if (typeof resObj.data === 'string' && !isNaN(Number(resObj.data))) {
+        return Number(resObj.data);
       }
     }
     
     // Check direct count/total fields
-    if (typeof result.count === 'number') return result.count;
-    if (typeof result.total === 'number') return result.total;
-    if (typeof result.total_admins === 'number') return result.total_admins;
-    if (typeof result.total_representatives === 'number') return result.total_representatives;
+    if (typeof resObj.count === 'number') return resObj.count as number;
+    if (typeof resObj.total === 'number') return resObj.total as number;
+    if (typeof resObj.total_admins === 'number') return resObj.total_admins as number;
+    if (typeof resObj.total_representatives === 'number') return resObj.total_representatives as number;
   }
   
   // Direct number response

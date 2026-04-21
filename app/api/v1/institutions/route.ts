@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   try {
     const body = await request.json();
-    const authHeader = request.headers.get("Authorization");
     const response = await fetch(BACKEND_URL, {
       method: "POST",
       headers: { 

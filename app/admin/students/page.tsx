@@ -39,11 +39,10 @@ export default function StudentsPage() {
   const apiTotalPages = studentsData?.totalPages || 1
   const apiTotalStudents = countsData?.total || 0
   const activeStudentsCount = countsData?.active || 0
-  const error = queryError ? (queryError as any).message : null
+  const error = queryError ? (queryError as unknown as Error).message : null;
 
   // PAGINATION (Backend-driven)
   const totalPages = apiTotalPages;
-  const paginatedStudents = students; 
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 

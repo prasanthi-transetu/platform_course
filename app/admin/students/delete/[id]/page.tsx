@@ -18,7 +18,7 @@ export default function DeleteStudentPage() {
 
   useEffect(() => {
     if (queryError) {
-      setError((queryError as any).message || "Failed to load student data")
+      setError((queryError as unknown as Error).message || "Failed to load student data")
     }
   }, [queryError])
 
