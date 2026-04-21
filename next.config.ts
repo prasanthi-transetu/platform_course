@@ -22,10 +22,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  eslint: {
-    // Allow production builds to succeed even if there are ESLint issues.
-    ignoreDuringBuilds: true,
-  },
+  // eslint: {
+  //   ignoreDuringBuilds: true,
+  // },
   async headers() {
     return [
       {
