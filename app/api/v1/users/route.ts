@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 const API_HOST = process.env.NEXT_PUBLIC_API_URL || "https://lms-backend-n83k.onrender.com";
 const BACKEND_URL = `${API_HOST}/api/v1/users`;
 
