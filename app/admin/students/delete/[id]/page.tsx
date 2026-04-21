@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useStudent, useDeleteStudent, type Student } from "@/features/students/api"
+import { useStudent, useDeleteStudent } from "@/features/students/api"
 
 export default function DeleteStudentPage() {
   const params = useParams()

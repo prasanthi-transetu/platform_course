@@ -12,30 +12,15 @@ export default function CreateBatchPage() {
   const [instructor, setInstructor] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  console.log(file); // Use file to avoid unused warning
+
+
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState("");
   console.log(formError); // Use formError to avoid unused warning
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
 
   const handleBlur = (field: string, value: string) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -107,7 +92,8 @@ export default function CreateBatchPage() {
       return;
     }
     // Submit logic here
-    console.log("Batch created:", { batchName, institution, course, instructor, startDate, endDate, file });
+    console.log("Batch created:", { batchName, institution, course, instructor, startDate, endDate });
+
   };
 
   const getInputClass = (field: string) => {

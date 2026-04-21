@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ChevronRight, Plus, X, Info, LayoutGrid, Pencil, Trash2, Check, Shuffle,
+  ChevronRight, Plus, X, Info, LayoutGrid, Pencil, Trash2, Check,
 } from "lucide-react";
 import Link from "next/link";
 import { isEmpty, isPositiveNumber, inputErrorClass, errorTextClass } from "@/lib/validation";
@@ -19,7 +19,6 @@ const defaultQuestions: Question[] = [
 ];
 
 export default function EditQuizPage() {
-  const params = useParams();
   const router = useRouter();
 
   const [title, setTitle] = useState("Introduction to Algorithms");
@@ -53,7 +52,7 @@ export default function EditQuizPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [formError, setFormError] = useState("");
+
 
   const validateField = (field: string, value: string): string => {
     let error = "";
@@ -119,9 +118,7 @@ export default function EditQuizPage() {
   };
 
   const handleUpdate = () => {
-    setFormError("");
     if (!validateAll()) {
-      setFormError("Please fix the errors before updating.");
       return;
     }
     router.push("/admin/quizzes");

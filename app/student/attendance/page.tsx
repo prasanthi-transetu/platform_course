@@ -8,11 +8,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Download,
-  Filter,
-  CalendarDays,
-  MoreVertical,
   Moon,
-  Sun,
   Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -59,7 +55,7 @@ const attendanceLogs = [
 ];
 
 export default function AttendancePage() {
-  const [activeTab, setActiveTab] = useState("all");
+
 
   return (
     <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

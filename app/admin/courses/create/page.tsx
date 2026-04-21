@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, LayoutGrid, ChevronDown, MonitorPlay } from "lucide-react";
+import { Plus, LayoutGrid, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 

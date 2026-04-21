@@ -14,8 +14,7 @@ import {
   Code2,
   Terminal,
   Palette,
-  Briefcase,
-  Database
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

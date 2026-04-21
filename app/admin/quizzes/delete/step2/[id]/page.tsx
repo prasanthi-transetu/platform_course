@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { X, TriangleAlert, Trash2 } from "lucide-react";
 
 export default function DeleteQuizStep2Page() {
-  const params = useParams();
   const router = useRouter();
 
   return (

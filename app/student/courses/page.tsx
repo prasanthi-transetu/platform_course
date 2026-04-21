@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Image from "next/image";
 import { 
   Search, 
   Filter, 
@@ -299,7 +300,13 @@ export default function CoursesPage() {
                       </td>
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
-                          <img src={course.instructorImg} alt="" className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200" />
+                        <Image 
+                          src={course.instructorImg} 
+                          alt={course.instructor} 
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200" 
+                        />
                           <p className="text-sm font-medium text-gray-600">{course.instructor}</p>
                         </div>
                       </td>

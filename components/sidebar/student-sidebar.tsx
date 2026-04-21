@@ -10,9 +10,9 @@ import {
   Settings, 
   LogOut,
   GraduationCap,
-  Bell,
   HelpCircle
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const sidebarLinks = [
@@ -106,9 +106,11 @@ export default function StudentSidebar() {
       <div className="p-4 bg-white/5 mt-auto border-t border-gray-800">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="relative group cursor-pointer">
-            <img 
+            <Image 
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
               alt="Profile" 
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full border-2 border-slate-700 bg-slate-800"
             />
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#0B1221] rounded-full"></div>

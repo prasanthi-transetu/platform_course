@@ -513,7 +513,7 @@ export default function UsersPage() {
                                     setErrors({}); 
                                     setTouched({}); 
                                     setEditUser(u);
-                                  } catch (error) {
+                                  } catch {
                                     alert("Failed to fetch user details for editing");
                                   } finally {
                                     setIsLoading(false);

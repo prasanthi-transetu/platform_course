@@ -6,7 +6,6 @@ import {
   FileText, 
   Plus, 
   ChevronDown, 
-  Trash2, 
   Bold, 
   Italic, 
   List, 
@@ -17,8 +16,7 @@ import {
   FileUp,
   Video,
   Globe,
-  Target,
-  LayoutGrid
+  Target
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -6,17 +6,14 @@ import {
   Play, 
   CheckCircle2, 
   Circle, 
-  Lock, 
-  BookOpen, 
-  Plus, 
-  MessageSquare,
+  Lock,
+  Plus,
   Clock,
   ArrowRight,
   ChevronRight,
   Award,
   BarChart,
   HelpCircle,
-  Video,
   FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,8 +67,8 @@ const quizData = {
 
 export default function CoursePlayerPage() {
   const [view, setView] = useState<"video" | "text" | "quiz" | "results">("video");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notesSidebarOpen, setNotesSidebarOpen] = useState(true);
+  const [sidebarOpen] = useState(true);
+  const [notesSidebarOpen] = useState(true);
 
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden text-[#1E293B]">

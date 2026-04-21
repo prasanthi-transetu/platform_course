@@ -1,11 +1,17 @@
 "use client";
+import Image from "next/image";
 
 export default function NavUser() {
   return (
     <div className="p-4 border-t border-[#2a374a] flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600">
-          <img src="https://ui-avatars.com/api/?name=Alex+Thompson&background=random" alt="User" />
+          <Image 
+            src="https://ui-avatars.com/api/?name=Alex+Thompson&background=random" 
+            alt="User" 
+            width={40}
+            height={40}
+          />
         </div>
 
         <div>

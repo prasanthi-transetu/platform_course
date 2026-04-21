@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { Bell } from "lucide-react";
 
 export default function StudentHeader() {
   return (

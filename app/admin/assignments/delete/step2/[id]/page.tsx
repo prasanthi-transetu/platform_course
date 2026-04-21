@@ -1,10 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { X, AlertCircle, TriangleAlert } from "lucide-react";
+import { X, TriangleAlert } from "lucide-react";
 
 export default function DeleteAssignmentStep2Page() {
-  const params = useParams();
   const router = useRouter();
 
   return (

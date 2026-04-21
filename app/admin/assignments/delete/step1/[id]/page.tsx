@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { X, AlertCircle, Trash2 } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 
 export default function DeleteAssignmentStep1Page() {
   const params = useParams();

@@ -6,7 +6,6 @@ import {
   TrendingUp, 
   Info, 
   Calendar,
-  MoreHorizontal,
   ArrowUpRight
 } from "lucide-react";
 import { 

@@ -23,6 +23,14 @@ export default function EditInstitutionPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    validateField(field, value)
+  }
 
   useEffect(() => {
     const loadInstitution = async () => {
@@ -92,13 +100,7 @@ export default function EditInstitutionPage() {
     setContacts(updated)
   }
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
 
-  const handleFieldBlur = (field: string, value: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }))
-    validateField(field, value)
-  }
 
   const validateField = (field: string, value: string): string => {
     let error = ""

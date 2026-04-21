@@ -11,7 +11,7 @@ import { isEmpty, inputErrorClass, errorTextClass } from "@/lib/validation";
 export default function EditAssignmentPage() {
   const params = useParams();
   const router = useRouter();
-  const assignmentId = params.id;
+
 
   const [title, setTitle] = useState("Introduction to Web Ethics");
   const [description, setDescription] = useState("The objective of this assignment is to explore the ethical considerations of web development and software engineering. Students will analyze case studies related to data privacy, accessibility, algorithmic bias, and the environmental impact of large-scale digital infrastructure.");
@@ -24,7 +24,7 @@ export default function EditAssignmentPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [formError, setFormError] = useState("");
+
 
   const handleAddCriteria = () => {
     setCriteria([...criteria, { name: "", marks: "0" }]);
@@ -37,11 +37,10 @@ export default function EditAssignmentPage() {
   };
 
   const handleSave = () => {
-    setFormError("");
     if (!validateAll()) {
-      setFormError("Please fix the errors above before saving.");
       return;
     }
+
     router.push("/admin/assignments");
   };
 
