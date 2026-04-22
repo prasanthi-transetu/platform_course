@@ -309,7 +309,7 @@ export default function UsersPage() {
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">
-            User Management
+            User Management <span className="text-[10px] font-normal text-gray-300">v1.1</span>
           </h1>
           <p className="text-gray-500 text-sm">
             Oversee administrators and institution representatives
