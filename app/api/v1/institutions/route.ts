@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       url = `${BACKEND_URL}/search?search=${encodeURIComponent(search)}`;
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(url, { cache: "no-store",
       headers: { 
         "Content-Type": "application/json",
         ...(authHeader ? { "Authorization": authHeader } : {})
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   try {
     const body = await request.json();
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(BACKEND_URL, { cache: "no-store",
       method: "POST",
       headers: { 
         "Content-Type": "application/json",

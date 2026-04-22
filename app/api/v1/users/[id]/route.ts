@@ -18,7 +18,7 @@ export async function GET(
   const auth = getAuth(request);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/${id}`, { cache: "no-store",
       headers: { 
         "Content-Type": "application/json",
         ...(auth ? { "Authorization": auth } : {})
@@ -53,7 +53,7 @@ export async function PATCH(
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
     
     try {
-      const response = await fetch(`${BACKEND_URL}/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/${id}`, { cache: "no-store",
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
@@ -112,7 +112,7 @@ export async function PUT(
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
     
     try {
-      const response = await fetch(`${BACKEND_URL}/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/${id}`, { cache: "no-store",
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
@@ -163,7 +163,7 @@ export async function DELETE(
   const auth = getAuth(request);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/${id}`, { cache: "no-store",
       method: "DELETE",
       headers: auth ? { "Authorization": auth } : {},
     });

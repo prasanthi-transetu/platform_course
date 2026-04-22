@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   
   try {
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(BACKEND_URL, { cache: "no-store",
       headers: { 
         "Content-Type": "application/json",
         ...(authHeader ? { "Authorization": authHeader } : {})

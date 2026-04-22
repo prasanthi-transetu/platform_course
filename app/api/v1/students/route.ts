@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       url = `${BACKEND_URL}?${query.toString()}`;
     }
 
-    const response = await fetch(url, {
+    const response = await fetch(url, { cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });
     const data = await response.json();
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     console.log("Target URL:", BACKEND_URL);
     console.log("Payload:", JSON.stringify(body, null, 2));
     
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(BACKEND_URL, { cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

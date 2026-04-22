@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const auth = getAuth(request);
   
   try {
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(BACKEND_URL, { cache: "no-store",
       headers: { 
         "Content-Type": "application/json",
         ...(auth ? { "Authorization": auth } : {})
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(BACKEND_URL, { cache: "no-store",
       method: "POST",
       headers: { 
         "Content-Type": "application/json",

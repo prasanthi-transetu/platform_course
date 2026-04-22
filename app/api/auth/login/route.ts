@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-        const backendResponse = await fetch(backendUrl, {
+        const backendResponse = await fetch(backendUrl, { cache: "no-store",
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
