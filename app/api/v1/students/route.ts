@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`GET Students proxy connection error [${BACKEND_URL}]:`, message);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     console.log("Backend Response Status:", response.status);
     console.log("Backend Response Body:", JSON.stringify(data, null, 2));
     
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`--- DEBUG: PROXY POST ERROR [${BACKEND_URL}] ---`);

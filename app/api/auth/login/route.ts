@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         try {
           const data = await backendResponse.json();
-          return NextResponse.json(data, { status: backendResponse.status });
+          return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: backendResponse.status });
         } catch {
           // If backend returned something non-JSON, only fallback if it was a server error
           if (backendResponse.status >= 500) {

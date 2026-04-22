@@ -26,7 +26,7 @@ export async function GET(
     });
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`GET User proxy error [${BACKEND_URL}/${id}]:`, message);
@@ -78,11 +78,11 @@ export async function PATCH(
         data = { message: text || `Backend returned status ${response.status}` };
       }
       
-      return NextResponse.json(data, { status: response.status });
+      return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
      } catch (fetchError: unknown) {
         clearTimeout(timeoutId);
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          return NextResponse.json({ message: "Backend request timed out" }, { status: 504 });
+          return NextResponse.json({ message: "Backend request timed out" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 504 });
         }
         throw fetchError;
       }
@@ -137,11 +137,11 @@ export async function PUT(
         data = { message: text || `Backend returned status ${response.status}` };
       }
       
-      return NextResponse.json(data, { status: response.status });
+      return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
      } catch (fetchError: unknown) {
         clearTimeout(timeoutId);
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          return NextResponse.json({ message: "Backend request timed out" }, { status: 504 });
+          return NextResponse.json({ message: "Backend request timed out" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 504 });
         }
         throw fetchError;
       }
@@ -174,7 +174,7 @@ export async function DELETE(
     }
     
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`DELETE User proxy error [${BACKEND_URL}/${id}]:`, message);

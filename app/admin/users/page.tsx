@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
 import { X, Pencil, Trash2, Eye, EyeOff, Loader2, Plus, Search, MoreVertical } from "lucide-react";
 import { isEmpty, isValidEmail, inputErrorClass, errorTextClass } from "@/lib/validation";

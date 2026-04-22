@@ -25,10 +25,10 @@ export async function GET(
     });
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error) {
     console.error(`GET Institution ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to fetch institution from backend" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to fetch institution from backend" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 500 });
   }
 }
 
@@ -50,10 +50,10 @@ export async function PUT(
     });
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error) {
     console.error(`PUT Institution ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to update institution in backend" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to update institution in backend" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 500 });
   }
 }
 
@@ -76,9 +76,9 @@ export async function DELETE(
     }
     
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error) {
     console.error(`DELETE Institution ${request.url} proxy error:`, error);
-    return NextResponse.json({ message: "Failed to delete institution in backend" }, { status: 500 });
+    return NextResponse.json({ message: "Failed to delete institution in backend" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 500 });
   }
 }

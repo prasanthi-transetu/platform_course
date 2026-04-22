@@ -26,7 +26,7 @@ export async function GET(
     });
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`GET Student proxy error [${BACKEND_URL}/${id}]:`, message);
@@ -56,7 +56,7 @@ export async function PUT(
     });
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`PUT Student proxy error [${BACKEND_URL}/${id}]:`, message);
@@ -86,7 +86,7 @@ export async function DELETE(
     }
     
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: response.status });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`DELETE Student proxy error [${BACKEND_URL}/${id}]:`, message);

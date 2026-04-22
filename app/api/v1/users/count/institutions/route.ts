@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate", "Pragma": "no-cache", "Expires": "0" },  status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`GET Institutions Count proxy error [${BACKEND_URL}]:`, message);
